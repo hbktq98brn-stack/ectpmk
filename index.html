@@ -5,261 +5,50 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
   <title>Система контроля ЭЦП</title>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-    body {
-      background: linear-gradient(135deg, #1e2b3c 0%, #0f1a26 100%);
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      padding: 15px;
-    }
-    .dashboard {
-      width: 100%;
-      max-width: 1600px;
-      min-width: 1000px;
-      background: rgba(255, 255, 255, 0.05);
-      backdrop-filter: blur(10px);
-      border-radius: 28px;
-      padding: 20px;
-      box-shadow: 0 30px 50px rgba(0,0,0,0.6);
-      border: 1px solid rgba(255,255,255,0.1);
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
-    .header {
-      display: flex;
-      align-items: center;
-      gap: 20px;
-      margin-bottom: 5px;
-      flex-wrap: wrap;
-    }
-    .logo-placeholder {
-      width: 2cm;
-      height: 2cm;
-      min-width: 2cm;
-      min-height: 2cm;
-      background: rgba(255,255,255,0.15);
-      border: 2px dashed rgba(255,255,255,0.4);
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-size: 10px;
-      text-align: center;
-      transition: 0.2s;
-      background-size: cover;
-      background-position: center;
-    }
-    .title {
-      font-size: clamp(1.6rem, 3vw, 2.4rem);
-      font-weight: 700;
-      color: white;
-      letter-spacing: 1px;
-      text-shadow: 0 4px 12px black;
-      flex: 1;
-    }
-    .user-block {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      background: rgba(0,0,0,0.4);
-      padding: 8px 16px;
-      border-radius: 30px;
-      color: #ccc;
-    }
-    select, input, button {
-      outline: none;
-    }
-    .user-block select {
-      background: #2c3e50;
-      color: white;
-      border: none;
-      padding: 6px 10px;
-      border-radius: 20px;
-      font-weight: 500;
-    }
-    .user-block input {
-      background: #2c3e50;
-      border: none;
-      padding: 6px 12px;
-      border-radius: 20px;
-      color: white;
-      width: 120px;
-    }
-    .btn {
-      background: #2980b9;
-      border: none;
-      color: white;
-      padding: 6px 16px;
-      border-radius: 20px;
-      cursor: pointer;
-      font-weight: 600;
-      transition: 0.2s;
-    }
-    .btn:hover { background: #3498db; }
-    .btn-logout { background: #7f8c8d; }
-    .btn-logout:hover { background: #95a5a6; }
-    .btn-delete { background: #c0392b; margin-left: 5px; }
-    .btn-delete:hover { background: #e74c3c; }
-    .row {
-      display: flex;
-      gap: 15px;
-      flex-wrap: wrap;
-    }
-    .card {
-      background: rgba(20, 30, 40, 0.7);
-      backdrop-filter: blur(8px);
-      border-radius: 20px;
-      padding: 16px;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.5);
-      border: 1px solid rgba(255,255,255,0.08);
-      flex: 1 1 calc(25% - 15px);
-      min-width: 200px;
-      display: flex;
-      flex-direction: column;
-      cursor: pointer;
-      transition: all 0.25s;
-      color: white;
-      position: relative;
-      overflow: hidden;
-    }
-    .card:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 15px 30px rgba(0,160,255,0.3);
-      border-color: rgba(255,255,255,0.3);
-    }
-    .card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 10px;
-    }
-    .card-title {
-      font-weight: 600;
-      font-size: 1rem;
-      opacity: 0.9;
-    }
-    .badge {
-      font-weight: 800;
-      font-size: 1.4rem;
-      color: #f1c40f;
-      text-shadow: 0 0 8px black;
-    }
-    .indicators {
-      display: flex;
-      gap: 6px;
-      margin-top: auto;
-      flex-wrap: wrap;
-    }
-    .indicator {
-      flex: 1;
-      min-width: 50px;
-      background: #2c3e50;
-      border-radius: 10px;
-      padding: 5px;
-      text-align: center;
-      font-size: 0.7rem;
-      font-weight: bold;
-      color: white;
-      transition: background 0.3s;
-    }
-    .indicator.green { background: #27ae60; }
-    .indicator.red {
-      background: #e74c3c;
-      animation: pulse-red 1s infinite;
-    }
-    @keyframes pulse-red {
-      0% { box-shadow: 0 0 5px #e74c3c; }
-      50% { box-shadow: 0 0 20px #e74c3c; }
-      100% { box-shadow: 0 0 5px #e74c3c; }
-    }
-    .full-width-card {
-      flex: 1 1 100%;
-      background: rgba(20, 30, 40, 0.7);
-      backdrop-filter: blur(8px);
-      border-radius: 20px;
-      padding: 16px;
-      color: white;
-      cursor: pointer;
-      border: 1px solid rgba(255,255,255,0.1);
-      transition: 0.2s;
-      text-align: center;
-    }
-    .full-width-card:hover { background: rgba(30, 40, 55, 0.8); }
-    .modal {
-      display: none;
-      position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.7);
-      backdrop-filter: blur(6px);
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
-    }
-    .modal.active { display: flex; }
-    .modal-content {
-      background: #1e2b3c;
-      border-radius: 24px;
-      padding: 20px;
-      width: 90%;
-      max-width: 1200px;
-      max-height: 85vh;
-      overflow-y: auto;
-      color: white;
-      box-shadow: 0 30px 60px black;
-    }
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 15px;
-      font-size: 1.4rem;
-      font-weight: bold;
-    }
-    .close-btn {
-      background: none;
-      border: none;
-      color: white;
-      font-size: 2rem;
-      cursor: pointer;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 10px;
-      font-size: 0.85rem;
-    }
-    th { background: #2c3e50; padding: 8px; text-align: left; }
-    td, th { border: 1px solid #34495e; padding: 6px; }
-    input[type="text"], input[type="date"], select {
-      background: #2c3e50;
-      color: white;
-      border: 1px solid #5d6d7e;
-      padding: 4px 8px;
-      border-radius: 5px;
-      width: 100%;
-      box-sizing: border-box;
-    }
-    .search-box { margin-bottom: 10px; display: flex; gap: 10px; }
-    .search-box input { flex: 1; }
-    .actions { display: flex; gap: 8px; margin-top: 12px; justify-content: flex-end; }
-    .hidden { display: none; }
-    .number-cell {
-      text-align: center;
-      font-weight: bold;
-      background: #1e2b3c;
-      user-select: none;
-    }
-    @media (max-width: 1100px) {
-      .card { flex: 1 1 calc(50% - 15px); }
-    }
+    * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif; }
+    body { background: linear-gradient(135deg,#1e2b3c 0%,#0f1a26 100%); min-height:100vh; display:flex; justify-content:center; align-items:flex-start; padding:15px; }
+    .dashboard { width:100%; max-width:1600px; min-width:1000px; background:rgba(255,255,255,0.05); backdrop-filter:blur(10px); border-radius:28px; padding:20px; box-shadow:0 30px 50px rgba(0,0,0,0.6); border:1px solid rgba(255,255,255,0.1); display:flex; flex-direction:column; gap:20px; }
+    .header { display:flex; align-items:center; gap:20px; margin-bottom:5px; flex-wrap:wrap; }
+    .logo-placeholder { width:2cm; height:2cm; min-width:2cm; min-height:2cm; background:rgba(255,255,255,0.15); border:2px dashed rgba(255,255,255,0.4); border-radius:10px; display:flex; align-items:center; justify-content:center; color:white; font-size:10px; text-align:center; background-size:cover; background-position:center; }
+    .title { font-size:clamp(1.6rem,3vw,2.4rem); font-weight:700; color:white; letter-spacing:1px; text-shadow:0 4px 12px black; flex:1; }
+    .user-block { display:flex; align-items:center; gap:12px; background:rgba(0,0,0,0.4); padding:8px 16px; border-radius:30px; color:#ccc; }
+    select, input, button { outline:none; }
+    .user-block select { background:#2c3e50; color:white; border:none; padding:6px 10px; border-radius:20px; font-weight:500; }
+    .user-block input { background:#2c3e50; border:none; padding:6px 12px; border-radius:20px; color:white; width:120px; }
+    .btn { background:#2980b9; border:none; color:white; padding:6px 16px; border-radius:20px; cursor:pointer; font-weight:600; transition:0.2s; }
+    .btn:hover { background:#3498db; }
+    .btn-logout { background:#7f8c8d; }
+    .btn-logout:hover { background:#95a5a6; }
+    .btn-delete { background:#c0392b; margin-left:5px; }
+    .btn-delete:hover { background:#e74c3c; }
+    .row { display:flex; gap:15px; flex-wrap:wrap; }
+    .card { background:rgba(20,30,40,0.7); backdrop-filter:blur(8px); border-radius:20px; padding:16px; box-shadow:0 8px 20px rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.08); flex:1 1 calc(25% - 15px); min-width:200px; display:flex; flex-direction:column; cursor:pointer; transition:all 0.25s; color:white; position:relative; overflow:hidden; }
+    .card:hover { transform:translateY(-3px); box-shadow:0 15px 30px rgba(0,160,255,0.3); border-color:rgba(255,255,255,0.3); }
+    .card-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px; }
+    .card-title { font-weight:600; font-size:1rem; opacity:0.9; }
+    .badge { font-weight:800; font-size:1.4rem; color:#f1c40f; text-shadow:0 0 8px black; }
+    .indicators { display:flex; gap:6px; margin-top:auto; flex-wrap:wrap; }
+    .indicator { flex:1; min-width:50px; background:#2c3e50; border-radius:10px; padding:5px; text-align:center; font-size:0.7rem; font-weight:bold; color:white; transition:background 0.3s; }
+    .indicator.green { background:#27ae60; }
+    .indicator.red { background:#e74c3c; animation:pulse-red 1s infinite; }
+    @keyframes pulse-red { 0%{box-shadow:0 0 5px #e74c3c;} 50%{box-shadow:0 0 20px #e74c3c;} 100%{box-shadow:0 0 5px #e74c3c;} }
+    .full-width-card { flex:1 1 100%; background:rgba(20,30,40,0.7); backdrop-filter:blur(8px); border-radius:20px; padding:16px; color:white; cursor:pointer; border:1px solid rgba(255,255,255,0.1); transition:0.2s; text-align:center; }
+    .full-width-card:hover { background:rgba(30,40,55,0.8); }
+    .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); backdrop-filter:blur(6px); justify-content:center; align-items:center; z-index:1000; }
+    .modal.active { display:flex; }
+    .modal-content { background:#1e2b3c; border-radius:24px; padding:20px; width:90%; max-width:1200px; max-height:85vh; overflow-y:auto; color:white; box-shadow:0 30px 60px black; }
+    .modal-header { display:flex; justify-content:space-between; margin-bottom:15px; font-size:1.4rem; font-weight:bold; }
+    .close-btn { background:none; border:none; color:white; font-size:2rem; cursor:pointer; }
+    table { width:100%; border-collapse:collapse; margin-top:10px; font-size:0.85rem; }
+    th { background:#2c3e50; padding:8px; text-align:left; }
+    td, th { border:1px solid #34495e; padding:6px; }
+    input[type="text"], input[type="date"], select { background:#2c3e50; color:white; border:1px solid #5d6d7e; padding:4px 8px; border-radius:5px; width:100%; box-sizing:border-box; }
+    .search-box { margin-bottom:10px; display:flex; gap:10px; }
+    .search-box input { flex:1; }
+    .actions { display:flex; gap:8px; margin-top:12px; justify-content:flex-end; }
+    .hidden { display:none; }
+    .number-cell { text-align:center; font-weight:bold; background:#1e2b3c; user-select:none; }
+    @media (max-width:1100px) { .card { flex:1 1 calc(50% - 15px); } }
   </style>
 </head>
 <body>
@@ -284,6 +73,9 @@
     <strong>⚠️ ЭЦП, не установленные на ПК (сводно)</strong><br>
     <span id="uninstalledCount">0</span> записей без отметки "Установлена"
   </div>
+  <div style="position:fixed; bottom:10px; right:10px; z-index:999;">
+    <button class="btn" id="resetPasswordsBtn" title="Сбросить пароли (только для администратора)">🔑 Сброс паролей</button>
+  </div>
 </div>
 
 <div class="modal" id="modal">
@@ -298,62 +90,45 @@
 
 <script>
   (function() {
-    // ---------- Константы ----------
     const LOGINS = ["Красилова Н.", "Прохоров А.", "Полякова Е."];
     const STORAGE_DATA_KEY = 'ecp_dashboard_data';
     const STORAGE_LOG_KEY = 'ecp_dashboard_log';
     const STORAGE_PASS_KEY = 'ecp_passwords';
     const STORAGE_USER_KEY = 'ecp_current_user';
 
-    // ---------- Глобальные переменные ----------
     let currentUser = null;
-    // dataStore инициализируется ЗАГРУЗКОЙ из localStorage, затем если нет - пустой
-    let dataStore = {
-      fk: [],
-      kontur: [],
-      sbis: []
-    };
+    let dataStore = { fk: [], kontur: [], sbis: [] };
     let changeLog = [];
+    let userPasswords = {};
 
-    // ---------- Функции работы с хранилищем ----------
     function loadDataFromStorage() {
       const saved = localStorage.getItem(STORAGE_DATA_KEY);
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
-          // Проверяем структуру
           if (parsed && typeof parsed === 'object' && 'fk' in parsed && 'kontur' in parsed && 'sbis' in parsed) {
             dataStore = parsed;
-            console.log('Данные загружены из localStorage:', dataStore);
           } else {
-            console.warn('Структура данных в localStorage нарушена, сброс.');
             dataStore = { fk: [], kontur: [], sbis: [] };
-            saveDataToStorage(); // сохраним чистую структуру
+            saveDataToStorage();
           }
         } catch (e) {
-          console.error('Ошибка парсинга данных:', e);
           dataStore = { fk: [], kontur: [], sbis: [] };
           saveDataToStorage();
         }
       } else {
-        // Первый запуск, сохраним пустую структуру
         saveDataToStorage();
       }
     }
 
     function saveDataToStorage() {
       localStorage.setItem(STORAGE_DATA_KEY, JSON.stringify(dataStore));
-      console.log('Данные сохранены в localStorage:', dataStore);
     }
 
     function loadLogFromStorage() {
       const saved = localStorage.getItem(STORAGE_LOG_KEY);
       if (saved) {
-        try {
-          changeLog = JSON.parse(saved);
-        } catch (e) {
-          changeLog = [];
-        }
+        try { changeLog = JSON.parse(saved); } catch (e) { changeLog = []; }
       }
     }
 
@@ -364,11 +139,9 @@
     function loadPasswordsFromStorage() {
       const saved = localStorage.getItem(STORAGE_PASS_KEY);
       if (saved) {
-        try {
-          userPasswords = JSON.parse(saved);
-        } catch (e) {
-          userPasswords = {};
-        }
+        try { userPasswords = JSON.parse(saved); } catch (e) { userPasswords = {}; }
+      } else {
+        userPasswords = {};
       }
     }
 
@@ -380,6 +153,8 @@
       const saved = localStorage.getItem(STORAGE_USER_KEY);
       if (saved && LOGINS.includes(saved)) {
         currentUser = saved;
+      } else {
+        currentUser = null;
       }
     }
 
@@ -391,18 +166,13 @@
       }
     }
 
-    // Инициализация: загружаем всё до любых действий
-    function initializeData() {
+    function initializeAll() {
       loadPasswordsFromStorage();
-      loadDataFromStorage();   // dataStore теперь точно из localStorage
+      loadDataFromStorage();
       loadLogFromStorage();
       loadSessionFromStorage();
     }
-
-    // Вызываем сразу
-    initializeData();
-
-    let userPasswords = {};
+    initializeAll();
 
     function logAction(action, details) {
       changeLog.push({
@@ -438,7 +208,6 @@
       return { valid, warn7, warn1, total: filtered.length };
     }
 
-    // DOM элементы
     const rowsContainer = document.getElementById('rowsContainer');
     const uninstalledCard = document.getElementById('uninstalledCard');
     const uninstalledCountSpan = document.getElementById('uninstalledCount');
@@ -446,6 +215,7 @@
     const modalTitle = document.getElementById('modalTitle');
     const modalBody = document.getElementById('modalBody');
     const closeModalBtn = document.getElementById('closeModalBtn');
+    const resetPasswordsBtn = document.getElementById('resetPasswordsBtn');
 
     const providerConfig = [
       { key: 'fk', label: 'ФК' },
@@ -543,9 +313,7 @@
     function getNextNumber(provider) {
       const records = dataStore[provider] || [];
       if (records.length === 0) return 1;
-      const numbers = records
-        .map(r => parseInt(r.number, 10))
-        .filter(n => !isNaN(n));
+      const numbers = records.map(r => parseInt(r.number, 10)).filter(n => !isNaN(n));
       return numbers.length ? Math.max(...numbers) + 1 : 1;
     }
 
@@ -609,7 +377,6 @@
           `;
         }).join('');
 
-        // Обработчики кнопок
         tbody.querySelectorAll('.editBtn').forEach(btn => {
           btn.addEventListener('click', (e) => {
             const row = e.target.closest('tr');
@@ -631,7 +398,7 @@
               if (idx !== -1) {
                 records.splice(idx, 1);
                 logAction('delete_record', `Провайдер ${provider}, id ${id}`);
-                saveDataToStorage();   // СОХРАНЯЕМ СРАЗУ
+                saveDataToStorage();
                 searchInput.value = '';
                 renderTable('');
                 renderDashboard();
@@ -668,7 +435,7 @@
         if (record) {
           Object.assign(record, { number, fio, dateStart, dateEnd, type, empNumber, room, installed });
           logAction('update_record', `Провайдер ${provider}, id ${id}`);
-          saveDataToStorage();   // СОХРАНЯЕМ
+          saveDataToStorage();
         }
         searchInput.value = '';
         renderTable('');
@@ -690,7 +457,7 @@
         };
         records.push(newRec);
         logAction('add_record', `Провайдер ${provider}, номер ${newNumber}`);
-        saveDataToStorage();   // СОХРАНЯЕМ СРАЗУ
+        saveDataToStorage();
         searchInput.value = '';
         renderTable('');
         renderDashboard();
@@ -742,7 +509,7 @@
           if (rec) {
             rec.installed = checked;
             logAction('install_toggle', `Провайдер ${provider}, id ${id}, установлена=${checked}`);
-            saveDataToStorage();   // СОХРАНЯЕМ
+            saveDataToStorage();
             renderDashboard();
             modal.classList.remove('active');
           }
@@ -750,13 +517,13 @@
       });
     }
 
-    // Первичная настройка паролей
+    // ---------- Управление паролями ----------
     function isPasswordsSet() {
       return LOGINS.every(login => userPasswords[login] && userPasswords[login].length > 0);
     }
 
     function showSetupModal() {
-      let html = '<h3>Первичная настройка паролей</h3><p>Задайте пароль для каждого логина:</p>';
+      let html = '<h3>Первичная настройка паролей</h3><p>Задайте пароль для каждого пользователя:</p>';
       LOGINS.forEach(login => {
         html += `<div style="margin:10px 0;"><label>${login}</label> <input type="password" id="setup_${login.replace(/\s/g,'')}" placeholder="Пароль" style="width:250px;"></div>`;
       });
@@ -777,11 +544,21 @@
         userPasswords = newPass;
         savePasswordsToStorage();
         modal.classList.remove('active');
-        document.getElementById('loginBtn').disabled = false;
+        updateAuthUI();
       });
     }
 
-    // Авторизация
+    resetPasswordsBtn.addEventListener('click', () => {
+      if (confirm('Вы уверены, что хотите сбросить все пароли? После этого потребуется заново задать их.')) {
+        localStorage.removeItem(STORAGE_PASS_KEY);
+        userPasswords = {};
+        updateAuthUI();
+        if (!isPasswordsSet()) {
+          showSetupModal();
+        }
+      }
+    });
+
     const loginSelect = document.getElementById('loginSelect');
     const passwordInput = document.getElementById('passwordInput');
     const loginBtn = document.getElementById('loginBtn');
@@ -801,6 +578,9 @@
         logoutBtn.classList.add('hidden');
         document.querySelector('.user-block').style.background = 'rgba(0,0,0,0.4)';
         loginBtn.disabled = !isPasswordsSet();
+        if (!isPasswordsSet()) {
+          showSetupModal();
+        }
       }
     }
 
@@ -808,7 +588,7 @@
       const login = loginSelect.value;
       const pass = passwordInput.value;
       if (!login) return alert('Выберите логин');
-      if (!userPasswords[login]) return alert('Пароль не задан.');
+      if (!userPasswords[login]) return alert('Пароль для данного логина не задан.');
       if (userPasswords[login] === pass) {
         currentUser = login;
         saveSessionToStorage();
@@ -830,15 +610,8 @@
       rowsContainer.innerHTML = '<div style="color:white; padding:20px;">Войдите для просмотра дашборда</div>';
     });
 
-    // Финальная инициализация UI
     populateLoginSelect();
     updateAuthUI();
-
-    if (!isPasswordsSet()) {
-      showSetupModal();
-    } else {
-      loginBtn.disabled = false;
-    }
 
     if (currentUser) {
       renderDashboard();
@@ -846,7 +619,6 @@
       rowsContainer.innerHTML = '<div style="color:white; padding:20px;">Пожалуйста, войдите в систему</div>';
     }
 
-    // Автообновление раз в 60 секунд
     setInterval(() => {
       if (currentUser) renderDashboard();
     }, 60000);
