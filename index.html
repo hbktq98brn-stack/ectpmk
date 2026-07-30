@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Система контроля ЭЦП</title>
-  <!-- Firebase SDK (compat) -->
+  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
   <style>
@@ -78,7 +78,7 @@
     <button class="btn" id="importBtn">📥 Импорт данных</button>
     <input type="file" id="importFile" accept=".json" class="hidden">
   </div>
-  <div class="sync-status" id="syncStatus">🔄 Синхронизация...</div>
+  <div class="sync-status" id="syncStatus">🔄 Ожидание...</div>
 </div>
 
 <div class="modal" id="modal">
@@ -93,7 +93,7 @@
 
 <script>
   (function() {
-    // ⚠️ ВАША КОНФИГУРАЦИЯ FIREBASE (пробелы в концах строк убраны)
+    // ========== КОНФИГУРАЦИЯ FIREBASE (замените при необходимости) ==========
     const firebaseConfig = {
       apiKey: "AIzaSyBTb941B1JkHnSPrp5LQlHpYrV7QlAC5qc",
       authDomain: "ecpmkr-b2c2d.firebaseapp.com",
@@ -101,14 +101,23 @@
       storageBucket: "ecpmkr-b2c2d.firebasestorage.app",
       messagingSenderId: "371575817517",
       appId: "1:371575817517:web:dd72d69b4662c33c173fa4",
-      measurementId: "G-0QB7BQ14G6"  // не обязательно, но оставлено
+      measurementId: "G-0QB7BQ14G6"
     };
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
+    // Инициализация Firebase (с проверкой)
+    let db = null;
+    try {
+      firebase.initializeApp(firebaseConfig);
+      db = firebase.firestore();
+      console.log('✅ Firebase инициализирована');
+    } catch (e) {
+      console.error('❌ Ошибка Firebase:', e);
+      document.getElementById('syncStatus').textContent = '⚠️ Firebase недоступен';
+    }
 
-    // Локальные настройки (пароли и логины)
+    // ========== ЛОКАЛЬНЫЕ НАСТРОЙКИ ==========
     const LOGINS = ["Красилова Н.", "Прохоров А.", "Полякова Е."];
+    const STORAGE_DATA = 'ecp_dashboard_data';
     const STORAGE_PASS = 'ecp_passwords';
     const STORAGE_USER = 'ecp_current_user';
 
@@ -116,79 +125,101 @@
     let dataStore = { fk: [], kontur: [], sbis: [] };
     let userPasswords = {};
 
-    // ---------- Облачные функции ----------
-    function loadDataFromCloud() {
-      db.collection("ecp_data").doc("registries").get()
+    // ========== ФУНКЦИИ ХРАНЕНИЯ ==========
+    function loadLocalData() {
+      const raw = localStorage.getItem(STORAGE_DATA);
+      if (raw) {
+        try {
+          const parsed = JSON.parse(raw);
+          if (parsed && parsed.fk && parsed.kontur && parsed.sbis) {
+            dataStore = parsed;
+            console.log('📂 Загружено из localStorage');
+            return true;
+          }
+        } catch(e) {}
+      }
+      return false;
+    }
+
+    function saveLocalData() {
+      localStorage.setItem(STORAGE_DATA, JSON.stringify(dataStore));
+      console.log('💾 Сохранено локально');
+      document.getElementById('syncStatus').textContent = '💾 Локально';
+    }
+
+    // Загрузка из облака
+    function loadCloudData() {
+      if (!db) return Promise.reject('No DB');
+      return db.collection("ecp_data").doc("registries").get()
         .then(doc => {
           if (doc.exists) {
             const cloudData = doc.data();
             if (cloudData && cloudData.fk && cloudData.kontur && cloudData.sbis) {
               dataStore = cloudData;
               console.log('☁️ Данные загружены из облака');
-            } else {
-              dataStore = { fk: [], kontur: [], sbis: [] };
-              saveDataToCloud();
+              saveLocalData();
+              document.getElementById('syncStatus').textContent = '✅ Синхронизировано';
+              return true;
             }
-          } else {
-            dataStore = { fk: [], kontur: [], sbis: [] };
-            saveDataToCloud();
           }
-          renderAfterLoad();
-        })
-        .catch(err => {
-          console.error('Ошибка загрузки из облака:', err);
-          document.getElementById('syncStatus').textContent = '⚠️ Ошибка синхронизации';
+          // Если облако пустое – сохраняем текущее
+          return db.collection("ecp_data").doc("registries").set(dataStore)
+            .then(() => {
+              console.log('☁️ Создана облачная запись');
+              return true;
+            });
         });
     }
 
-    function saveDataToCloud() {
-      db.collection("ecp_data").doc("registries").set(dataStore)
+    function saveCloudData() {
+      if (!db) {
+        console.warn('☁️ База данных недоступна');
+        document.getElementById('syncStatus').textContent = '⚠️ Нет облака';
+        return Promise.resolve();
+      }
+      return db.collection("ecp_data").doc("registries").set(dataStore)
         .then(() => {
-          console.log('☁️ Данные сохранены в облако');
+          console.log('☁️ Данные отправлены в облако');
           document.getElementById('syncStatus').textContent = '✅ Синхронизировано';
-          setTimeout(() => {
-            document.getElementById('syncStatus').textContent = '🔄 Синхронизация...';
-          }, 2000);
         })
         .catch(err => {
-          console.error('Ошибка сохранения в облако:', err);
-          document.getElementById('syncStatus').textContent = '⚠️ Ошибка синхронизации';
+          console.error('Ошибка отправки в облако:', err);
+          document.getElementById('syncStatus').textContent = '⚠️ Ошибка облака';
         });
     }
 
-    function subscribeToCloudUpdates() {
-      db.collection("ecp_data").doc("registries")
-        .onSnapshot(doc => {
-          if (doc.exists) {
-            const cloudData = doc.data();
-            if (cloudData && cloudData.fk && cloudData.kontur && cloudData.sbis) {
-              if (JSON.stringify(dataStore) !== JSON.stringify(cloudData)) {
-                dataStore = cloudData;
-                console.log('🔄 Обновление из облака');
-                if (currentUser) renderDashboard();
-              }
+    // Подписка на изменения (real-time)
+    function subscribeCloudUpdates() {
+      if (!db) return;
+      db.collection("ecp_data").doc("registries").onSnapshot(doc => {
+        if (doc.exists) {
+          const cloudData = doc.data();
+          if (cloudData && cloudData.fk && cloudData.kontur && cloudData.sbis) {
+            if (JSON.stringify(dataStore) !== JSON.stringify(cloudData)) {
+              dataStore = cloudData;
+              saveLocalData();
+              console.log('🔄 Обновление из облака');
+              if (currentUser) renderDashboard();
             }
           }
-        }, err => {
-          console.error('Ошибка подписки на облако:', err);
-        });
+        }
+      }, err => {
+        console.error('Ошибка подписки:', err);
+      });
     }
 
-    // ---------- Локальное хранилище (пароли/сессия) ----------
+    // ========== ПАРОЛИ / СЕССИЯ ==========
     function loadPasswordsFromStorage() {
       const raw = localStorage.getItem(STORAGE_PASS);
       userPasswords = raw ? JSON.parse(raw) : {};
     }
-
     function savePasswordsToStorage() {
       localStorage.setItem(STORAGE_PASS, JSON.stringify(userPasswords));
     }
-
     function loadSessionFromStorage() {
       const saved = localStorage.getItem(STORAGE_USER);
       if (saved && LOGINS.includes(saved)) currentUser = saved;
     }
-
     function saveSessionToStorage() {
       if (currentUser) {
         localStorage.setItem(STORAGE_USER, currentUser);
@@ -197,19 +228,22 @@
       }
     }
 
-    // ---------- Инициализация ----------
+    // ========== ИНИЦИАЛИЗАЦИЯ ПРИ СТАРТЕ ==========
     loadPasswordsFromStorage();
     loadSessionFromStorage();
-    loadDataFromCloud();
-    subscribeToCloudUpdates();
 
-    function renderAfterLoad() {
-      if (currentUser) {
-        renderDashboard();
-      }
-    }
+    // Пробуем облако, если не получилось – локально
+    loadCloudData()
+      .catch(() => {
+        console.log('Загрузка из облака не удалась, пробуем localStorage');
+        loadLocalData();
+      })
+      .finally(() => {
+        subscribeCloudUpdates();
+        if (currentUser) renderDashboard();
+      });
 
-    // ---------- Экспорт / Импорт ----------
+    // ========== ЭКСПОРТ / ИМПОРТ ==========
     document.getElementById('exportBtn').addEventListener('click', () => {
       const blob = new Blob([JSON.stringify(dataStore, null, 2)], {type: 'application/json'});
       const url = URL.createObjectURL(blob);
@@ -234,7 +268,8 @@
           if (imported && imported.fk && imported.kontur && imported.sbis) {
             if (confirm('Импортировать данные? Текущие записи будут заменены.')) {
               dataStore = imported;
-              saveDataToCloud();
+              saveLocalData();
+              saveCloudData();
               if (currentUser) renderDashboard();
               alert('Данные успешно импортированы.');
             }
@@ -248,7 +283,7 @@
       reader.readAsText(file);
     });
 
-    // ---------- Вспомогательные ----------
+    // ========== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ==========
     function getDaysLeft(endDateStr) {
       if (!endDateStr) return null;
       const end = new Date(endDateStr);
@@ -267,7 +302,7 @@
       return numbers.length ? Math.max(...numbers) + 1 : 1;
     }
 
-    // ---------- DOM ----------
+    // ========== DOM ==========
     const rowsContainer = document.getElementById('rowsContainer');
     const uninstalledCard = document.getElementById('uninstalledCard');
     const uninstalledCountSpan = document.getElementById('uninstalledCount');
@@ -384,6 +419,7 @@
       if (e.target === modal) modal.classList.remove('active');
     });
 
+    // ========== ИСПРАВЛЕННЫЙ РЕДАКТОР (делегирование событий) ==========
     function openRegistryEditor(provider) {
       const records = dataStore[provider] || [];
       const provLabel = providerConfig.find(p => p.key === provider).label;
@@ -442,70 +478,74 @@
             </tr>
           `;
         }).join('');
-
-        tbody.querySelectorAll('.editBtn').forEach(btn => {
-          btn.addEventListener('click', (e) => {
-            const row = e.target.closest('tr');
-            enterEditMode(row);
-          });
-        });
-        tbody.querySelectorAll('.saveBtn').forEach(btn => {
-          btn.addEventListener('click', (e) => {
-            const row = e.target.closest('tr');
-            saveRow(row, provider);
-          });
-        });
-        tbody.querySelectorAll('.deleteBtn').forEach(btn => {
-          btn.addEventListener('click', (e) => {
-            const row = e.target.closest('tr');
-            const id = row.dataset.id;
-            if (confirm('Удалить запись?')) {
-              const idx = records.findIndex(r => r.id === id);
-              if (idx !== -1) {
-                records.splice(idx, 1);
-                saveDataToCloud();
-                searchInput.value = '';
-                renderTable('');
-                renderDashboard();
-              }
-            }
-          });
-        });
       }
 
-      function enterEditMode(row) {
-        row.querySelectorAll('td[contenteditable="false"]:not(.number-cell)').forEach(cell => {
-          cell.contentEditable = 'true';
-          cell.style.background = '#34495e';
-        });
-        row.querySelectorAll('input, select').forEach(el => el.disabled = false);
-        row.querySelector('.editBtn').classList.add('hidden');
-        row.querySelector('.saveBtn').classList.remove('hidden');
-      }
-
-      function saveRow(row, prov) {
+      // Делегирование событий на tbody
+      tbody.addEventListener('click', (e) => {
+        const target = e.target;
+        const row = target.closest('tr');
+        if (!row) return;
         const id = row.dataset.id;
-        const cells = row.querySelectorAll('td');
-        const number = cells[0].textContent.trim();
-        const fio = cells[1].textContent.trim();
-        const dateStart = row.querySelector('input[type="date"]:nth-of-type(1)').value;
-        const dateEnd = row.querySelector('input[type="date"]:nth-of-type(2)').value;
-        const typeSelect = row.querySelector('select');
-        const type = typeSelect.value;
-        const empNumber = cells[5].textContent.trim();
-        const room = cells[6].textContent.trim();
-        const installed = row.querySelector('input[type="checkbox"]').checked;
 
-        const record = records.find(r => r.id === id);
-        if (record) {
-          Object.assign(record, { number, fio, dateStart, dateEnd, type, empNumber, room, installed });
-          saveDataToCloud();
+        // Кнопка "Изменить"
+        if (target.classList.contains('editBtn')) {
+          console.log('🔧 Редактирование строки', id);
+          row.querySelectorAll('td[contenteditable="false"]:not(.number-cell)').forEach(cell => {
+            cell.contentEditable = 'true';
+            cell.style.background = '#34495e';
+          });
+          row.querySelectorAll('input, select').forEach(el => el.disabled = false);
+          row.querySelector('.editBtn').classList.add('hidden');
+          row.querySelector('.saveBtn').classList.remove('hidden');
+          return;
         }
-        searchInput.value = '';
-        renderTable('');
-        renderDashboard();
-      }
 
+        // Кнопка "Сохранить"
+        if (target.classList.contains('saveBtn')) {
+          console.log('💾 Сохранение строки', id);
+          const cells = row.querySelectorAll('td');
+          const number = cells[0].textContent.trim();
+          const fio = cells[1].textContent.trim();
+          const dateStart = row.querySelector('input[type="date"]:nth-of-type(1)').value;
+          const dateEnd = row.querySelector('input[type="date"]:nth-of-type(2)').value;
+          const typeSelect = row.querySelector('select');
+          const type = typeSelect.value;
+          const empNumber = cells[5].textContent.trim();
+          const room = cells[6].textContent.trim();
+          const installed = row.querySelector('input[type="checkbox"]').checked;
+
+          const record = records.find(r => r.id === id);
+          if (record) {
+            Object.assign(record, { number, fio, dateStart, dateEnd, type, empNumber, room, installed });
+            saveLocalData();
+            saveCloudData();
+            console.log('✅ Запись обновлена');
+          }
+          searchInput.value = '';
+          renderTable('');
+          renderDashboard();
+          return;
+        }
+
+        // Кнопка "Удалить"
+        if (target.classList.contains('deleteBtn')) {
+          if (confirm('Удалить запись?')) {
+            const idx = records.findIndex(r => r.id === id);
+            if (idx !== -1) {
+              records.splice(idx, 1);
+              saveLocalData();
+              saveCloudData();
+              searchInput.value = '';
+              renderTable('');
+              renderDashboard();
+              console.log('🗑️ Запись удалена');
+            }
+          }
+          return;
+        }
+      });
+
+      // Кнопка "Создать новую запись"
       document.getElementById('addRecordBtn').addEventListener('click', () => {
         const newNumber = getNextNumber(provider);
         const newRec = {
@@ -520,16 +560,20 @@
           installed: false
         };
         records.push(newRec);
-        saveDataToCloud();
+        saveLocalData();
+        saveCloudData();
         searchInput.value = '';
         renderTable('');
         renderDashboard();
+        console.log('➕ Новая запись добавлена');
       });
 
+      // Поиск
       searchInput.addEventListener('input', () => renderTable(searchInput.value));
       renderTable('');
     }
 
+    // ========== ПРОСМОТР РЕЕСТРОВ ПО ТИПАМ ==========
     function openFilteredList(provider, type) {
       const records = dataStore[provider] || [];
       const filtered = records.filter(r => r.type === type);
@@ -544,6 +588,7 @@
       openModal(`Реестр ЭЦП (${typeNames[type]}) - ${provLabel}`, html);
     }
 
+    // ========== СВОДНАЯ ТАБЛИЦА НЕУСТАНОВЛЕННЫХ ==========
     function openUninstalledList() {
       let all = [];
       for (let prov in dataStore) {
@@ -571,7 +616,8 @@
           const rec = dataStore[provider].find(r => r.id === id);
           if (rec) {
             rec.installed = checked;
-            saveDataToCloud();
+            saveLocalData();
+            saveCloudData();
             renderDashboard();
             modal.classList.remove('active');
           }
@@ -579,7 +625,7 @@
       });
     }
 
-    // ---------- Авторизация ----------
+    // ========== АВТОРИЗАЦИЯ ==========
     function isPasswordsSet() {
       return LOGINS.every(login => userPasswords[login] && userPasswords[login].length > 0);
     }
