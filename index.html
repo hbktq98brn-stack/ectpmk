@@ -21,7 +21,6 @@
       padding: 15px;
     }
 
-    /* Основной контейнер адаптируется под ширину экрана ПК */
     .dashboard {
       width: 100%;
       max-width: 1600px;
@@ -37,7 +36,6 @@
       gap: 20px;
     }
 
-    /* Шапка */
     .header {
       display: flex;
       align-items: center;
@@ -60,13 +58,9 @@
       color: white;
       font-size: 10px;
       text-align: center;
-      cursor: pointer;
       transition: 0.2s;
       background-size: cover;
       background-position: center;
-    }
-    .logo-placeholder:hover {
-      background: rgba(255,255,255,0.25);
     }
 
     .title {
@@ -130,7 +124,6 @@
       background: #95a5a6;
     }
 
-    /* Ряды */
     .row {
       display: flex;
       gap: 15px;
@@ -231,7 +224,6 @@
       background: rgba(30, 40, 55, 0.8);
     }
 
-    /* Модальные окна */
     .modal {
       display: none;
       position: fixed;
@@ -333,9 +325,9 @@
 </head>
 <body>
 <div class="dashboard" id="dashboardApp">
-  <!-- Шапка -->
   <div class="header">
-    <div class="logo-placeholder" id="logoBox" title="Нажмите, чтобы загрузить фото (2x2 см)">📷<br>лого</div>
+    <!-- ВСТАВЬТЕ ПУТЬ К ЛОГОТИПУ ЗДЕСЬ: style="background-image: url('ваш_файл.png');" -->
+    <div class="logo-placeholder" id="logoBox" title="Логотип (2x2 см)">📷<br>лого</div>
     <div class="title">Система контроля электронных-цифровых подписей</div>
     <div class="user-block" id="authBlock">
       <select id="loginSelect">
@@ -350,17 +342,14 @@
     </div>
   </div>
 
-  <!-- Ряды динамически заполняются JS -->
   <div id="rowsContainer"></div>
 
-  <!-- Сводное окно неустановленных ЭЦП -->
   <div class="full-width-card" id="uninstalledCard">
     <strong>⚠️ ЭЦП, не установленные на ПК (сводно)</strong><br>
     <span id="uninstalledCount">0</span> записей без отметки "Установлена"
   </div>
 </div>
 
-<!-- Модальное окно для таблиц -->
 <div class="modal" id="modal">
   <div class="modal-content">
     <div class="modal-header">
@@ -373,31 +362,27 @@
 
 <script>
   (function() {
-    // ---------- Данные пользователей ----------
+    // Пользователи
     const USERS = {
       "Красилова Н.": "ZxC1234",
       "Прохоров А.": "VbN5678",
       "Полякова Е.": "SFr3478"
     };
 
-    // ---------- Глобальное состояние ----------
     let currentUser = null;
-    // Структура данных: для каждого провайдера (provider: 'fk','kontur','sbis') массив записей
     let dataStore = {
       fk: [],
       kontur: [],
       sbis: []
     };
-
-    // Логи изменений (in-memory + localStorage для демо)
     let changeLog = [];
 
-    // ---------- Инициализация localStorage ----------
+    // Загрузка данных и сессии из localStorage
     function loadFromStorage() {
-      const saved = localStorage.getItem('ecp_dashboard_data');
-      if (saved) {
+      const savedData = localStorage.getItem('ecp_dashboard_data');
+      if (savedData) {
         try {
-          const parsed = JSON.parse(saved);
+          const parsed = JSON.parse(savedData);
           if (parsed.fk && parsed.kontur && parsed.sbis) {
             dataStore = parsed;
           }
@@ -407,22 +392,19 @@
       if (logSaved) {
         try { changeLog = JSON.parse(logSaved); } catch(e){}
       }
+      // Восстановление сессии
+      const savedUser = localStorage.getItem('ecp_current_user');
+      if (savedUser && USERS[savedUser]) {
+        currentUser = savedUser;
+      }
     }
 
     function saveToStorage() {
       localStorage.setItem('ecp_dashboard_data', JSON.stringify(dataStore));
       localStorage.setItem('ecp_dashboard_log', JSON.stringify(changeLog));
-      // В реальной системе здесь вызов API Яндекс.Таблицы для синхронизации
-      syncToYandexTable();
+      // Сессия сохраняется отдельно при входе/выходе
     }
 
-    // Заглушка синхронизации с Яндекс.Таблицей (заменить на реальный запрос)
-    function syncToYandexTable() {
-      console.log('[SYNC] Отправка данных в Яндекс.Таблицу...', dataStore);
-      // Здесь должен быть fetch/axios запрос к API Яндекс.Таблиц
-    }
-
-    // Логирование действия
     function logAction(action, details) {
       const entry = {
         user: currentUser || 'неизвестный',
@@ -431,11 +413,9 @@
         details: details
       };
       changeLog.push(entry);
-      console.log('LOG:', entry);
       saveToStorage();
     }
 
-    // ---------- Работа с датами ----------
     function getDaysLeft(endDateStr) {
       if (!endDateStr) return null;
       const end = new Date(endDateStr);
@@ -445,23 +425,12 @@
       return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     }
 
-    function determineStatus(days) {
-      if (days === null || isNaN(days)) return 'unknown';
-      if (days > 7) return 'valid';
-      if (days > 1) return 'warning7';
-      if (days >= 0) return 'warning1';
-      return 'expired';
-    }
-
-    // ---------- Генерация ID записи ----------
     function generateId() {
       return Date.now().toString(36) + Math.random().toString(36).substr(2);
     }
 
-    // ---------- Подсчет индикаторов для заданного типа ЭЦП ----------
     function computeTypeStats(records, type) {
       const filtered = records.filter(r => r.type === type);
-      const now = new Date(); now.setHours(0,0,0,0);
       let valid = 0, warn7 = 0, warn1 = 0;
       filtered.forEach(r => {
         const days = getDaysLeft(r.dateEnd);
@@ -473,7 +442,6 @@
       return { valid, warn7, warn1, total: filtered.length };
     }
 
-    // ---------- Рендеринг дашборда ----------
     const rowsContainer = document.getElementById('rowsContainer');
     const uninstalledCard = document.getElementById('uninstalledCard');
     const uninstalledCountSpan = document.getElementById('uninstalledCount');
@@ -497,14 +465,11 @@
       let html = '';
       providerConfig.forEach(prov => {
         const records = dataStore[prov.key] || [];
-        // типы: Р, РД, С
         const statsR = computeTypeStats(records, 'Р');
         const statsRD = computeTypeStats(records, 'РД');
         const statsS = computeTypeStats(records, 'С');
 
         html += `<div class="row">`;
-
-        // Первое окошко - сводный реестр
         html += `
           <div class="card" data-action="openRegistry" data-provider="${prov.key}">
             <div class="card-header">
@@ -515,39 +480,26 @@
             <div style="margin-top:5px; font-weight:bold;">Записей: ${records.length}</div>
           </div>
         `;
-
-        // Окошко Руководство (Р)
         html += renderTypeCard(prov.key, 'Р', 'Руководство', statsR);
-        // Окошко Руководство департаментов (РД)
         html += renderTypeCard(prov.key, 'РД', 'Руководство департаментов', statsRD);
-        // Окошко Сотрудники МК (С)
         html += renderTypeCard(prov.key, 'С', 'Сотрудники МК', statsS);
-
         html += `</div>`;
       });
 
       rowsContainer.innerHTML = html;
-
-      // Обновление счетчика неустановленных
       updateUninstalledCount();
 
-      // Навешиваем обработчики на карточки
       document.querySelectorAll('.card[data-action="openRegistry"]').forEach(card => {
         card.addEventListener('click', (e) => {
-          const provider = card.dataset.provider;
-          openRegistryEditor(provider);
+          openRegistryEditor(card.dataset.provider);
         });
       });
-
       document.querySelectorAll('.card[data-action="openTypeList"]').forEach(card => {
         card.addEventListener('click', (e) => {
-          const provider = card.dataset.provider;
-          const type = card.dataset.type;
-          openFilteredList(provider, type);
+          openFilteredList(card.dataset.provider, card.dataset.type);
         });
       });
 
-      // Сводная карточка неустановленных
       uninstalledCard.onclick = () => openUninstalledList();
     }
 
@@ -574,7 +526,6 @@
       uninstalledCountSpan.textContent = total;
     }
 
-    // ---------- Модальные окна ----------
     function openModal(title, contentHtml) {
       modalTitle.textContent = title;
       modalBody.innerHTML = contentHtml;
@@ -586,7 +537,6 @@
       if (e.target === modal) modal.classList.remove('active');
     });
 
-    // Редактор сводного реестра (таблица с поиском и CRUD)
     function openRegistryEditor(provider) {
       const records = dataStore[provider] || [];
       const provLabel = providerConfig.find(p=>p.key===provider).label;
@@ -619,13 +569,10 @@
         const filtered = records.filter(r => {
           if (!filterText) return true;
           const search = filterText.toLowerCase();
-          return Object.values(r).some(val => 
-            String(val).toLowerCase().includes(search)
-          );
+          return Object.values(r).some(val => String(val).toLowerCase().includes(search));
         });
         tbody.innerHTML = filtered.map(r => {
           const days = getDaysLeft(r.dateEnd);
-          const daysText = days !== null ? days : '—';
           return `
             <tr data-id="${r.id}">
               <td>${r.number || ''}</td>
@@ -641,7 +588,7 @@
               </td>
               <td contenteditable="false">${r.empNumber || ''}</td>
               <td contenteditable="false">${r.room || ''}</td>
-              <td>${daysText}</td>
+              <td>${days !== null ? days : '—'}</td>
               <td><input type="checkbox" ${r.installed ? 'checked' : ''} disabled></td>
               <td>
                 <button class="btn editBtn">Изменить</button>
@@ -651,7 +598,6 @@
           `;
         }).join('');
 
-        // Привязка событий
         tbody.querySelectorAll('.editBtn').forEach(btn => {
           btn.addEventListener('click', (e) => {
             const row = e.target.closest('tr');
@@ -700,13 +646,12 @@
           record.empNumber = empNumber;
           record.room = room;
           record.installed = installed;
-          logAction('update_record', `Провайдер ${provider}, id ${id}, изменения: ${JSON.stringify(old)} -> ${JSON.stringify(record)}`);
+          logAction('update_record', `Провайдер ${provider}, id ${id}, изменения сохранены`);
         }
         saveToStorage();
         renderTable(searchInput.value);
       }
 
-      // Добавление новой записи
       document.getElementById('addRecordBtn').addEventListener('click', () => {
         const newRecord = {
           id: generateId(),
@@ -725,7 +670,6 @@
         renderTable(searchInput.value);
       });
 
-      // Поиск
       searchInput.addEventListener('input', (e) => {
         renderTable(e.target.value);
       });
@@ -733,7 +677,6 @@
       renderTable();
     }
 
-    // Открытие списка записей по типу (только просмотр)
     function openFilteredList(provider, type) {
       const records = dataStore[provider] || [];
       const filtered = records.filter(r => r.type === type);
@@ -755,7 +698,6 @@
       openModal(`Реестр ЭЦП (${typeNames[type]}) - ${provLabel}`, html);
     }
 
-    // Сводный список неустановленных
     function openUninstalledList() {
       let allUninstalled = [];
       Object.entries(dataStore).forEach(([provider, records]) => {
@@ -798,7 +740,7 @@
       });
     }
 
-    // ---------- Авторизация ----------
+    // Авторизация
     const loginSelect = document.getElementById('loginSelect');
     const passwordInput = document.getElementById('passwordInput');
     const loginBtn = document.getElementById('loginBtn');
@@ -826,6 +768,7 @@
       if (!login) return alert('Выберите логин');
       if (USERS[login] === pass) {
         currentUser = login;
+        localStorage.setItem('ecp_current_user', login);
         logAction('login', `Пользователь ${login} вошел`);
         updateAuthUI();
         renderDashboard();
@@ -838,41 +781,26 @@
     logoutBtn.addEventListener('click', () => {
       logAction('logout', `Пользователь ${currentUser} вышел`);
       currentUser = null;
+      localStorage.removeItem('ecp_current_user');
       updateAuthUI();
       renderDashboard();
       rowsContainer.innerHTML = '<div style="color:white; padding:20px;">Войдите для просмотра дашборда</div>';
     });
 
-    // Загрузка фото (заглушка)
-    document.getElementById('logoBox').addEventListener('click', () => {
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.accept = 'image/*';
-      input.onchange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-          const reader = new FileReader();
-          reader.onload = (ev) => {
-            document.getElementById('logoBox').style.backgroundImage = `url(${ev.target.result})`;
-            document.getElementById('logoBox').textContent = '';
-          };
-          reader.readAsDataURL(file);
-        }
-      };
-      input.click();
-    });
-
     // Инициализация
     loadFromStorage();
     updateAuthUI();
-    // Попытка автологина, если был сохранен (не делаем)
-    renderDashboard();
+    if (currentUser) {
+      // автоматически отображаем дашборд, если сессия восстановлена
+      renderDashboard();
+    } else {
+      rowsContainer.innerHTML = '<div style="color:white; padding:20px;">Пожалуйста, войдите в систему</div>';
+    }
 
-    // Обновление каждые 60 секунд для актуализации дат
+    // Автообновление раз в 60 секунд
     setInterval(() => {
       if (currentUser) renderDashboard();
     }, 60000);
-
   })();
 </script>
 </body>
