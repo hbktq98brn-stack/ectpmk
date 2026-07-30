@@ -91,84 +91,87 @@
 <script>
   (function() {
     const LOGINS = ["Красилова Н.", "Прохоров А.", "Полякова Е."];
-    const STORAGE_DATA_KEY = 'ecp_dashboard_data';
-    const STORAGE_LOG_KEY = 'ecp_dashboard_log';
-    const STORAGE_PASS_KEY = 'ecp_passwords';
-    const STORAGE_USER_KEY = 'ecp_current_user';
+    const STORAGE_DATA = 'ecp_dashboard_data';
+    const STORAGE_LOG = 'ecp_dashboard_log';
+    const STORAGE_PASS = 'ecp_passwords';
+    const STORAGE_USER = 'ecp_current_user';
 
     let currentUser = null;
     let dataStore = { fk: [], kontur: [], sbis: [] };
     let changeLog = [];
     let userPasswords = {};
 
+    // ----- Загрузка данных -----
     function loadDataFromStorage() {
-      const saved = localStorage.getItem(STORAGE_DATA_KEY);
+      const saved = localStorage.getItem(STORAGE_DATA);
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
-          if (parsed && typeof parsed === 'object' && 'fk' in parsed && 'kontur' in parsed && 'sbis' in parsed) {
+          if (parsed && typeof parsed === 'object' && Array.isArray(parsed.fk) && Array.isArray(parsed.kontur) && Array.isArray(parsed.sbis)) {
             dataStore = parsed;
+            console.log('✅ Данные загружены из localStorage:', dataStore);
           } else {
+            console.warn('⚠️ Структура данных повреждена, сброс.');
             dataStore = { fk: [], kontur: [], sbis: [] };
             saveDataToStorage();
           }
         } catch (e) {
+          console.error('❌ Ошибка парсинга данных:', e);
           dataStore = { fk: [], kontur: [], sbis: [] };
           saveDataToStorage();
         }
       } else {
+        console.log('📦 Данных в localStorage нет, используется пустой реестр.');
         saveDataToStorage();
       }
     }
 
     function saveDataToStorage() {
-      localStorage.setItem(STORAGE_DATA_KEY, JSON.stringify(dataStore));
+      localStorage.setItem(STORAGE_DATA, JSON.stringify(dataStore));
+      console.log('💾 Данные сохранены:', dataStore);
     }
 
     function loadLogFromStorage() {
-      const saved = localStorage.getItem(STORAGE_LOG_KEY);
+      const saved = localStorage.getItem(STORAGE_LOG);
       if (saved) {
         try { changeLog = JSON.parse(saved); } catch (e) { changeLog = []; }
       }
     }
 
     function saveLogToStorage() {
-      localStorage.setItem(STORAGE_LOG_KEY, JSON.stringify(changeLog));
+      localStorage.setItem(STORAGE_LOG, JSON.stringify(changeLog));
     }
 
     function loadPasswordsFromStorage() {
-      const saved = localStorage.getItem(STORAGE_PASS_KEY);
+      const saved = localStorage.getItem(STORAGE_PASS);
       if (saved) {
         try { userPasswords = JSON.parse(saved); } catch (e) { userPasswords = {}; }
-      } else {
-        userPasswords = {};
       }
     }
 
     function savePasswordsToStorage() {
-      localStorage.setItem(STORAGE_PASS_KEY, JSON.stringify(userPasswords));
+      localStorage.setItem(STORAGE_PASS, JSON.stringify(userPasswords));
     }
 
     function loadSessionFromStorage() {
-      const saved = localStorage.getItem(STORAGE_USER_KEY);
+      const saved = localStorage.getItem(STORAGE_USER);
       if (saved && LOGINS.includes(saved)) {
         currentUser = saved;
-      } else {
-        currentUser = null;
       }
     }
 
     function saveSessionToStorage() {
       if (currentUser) {
-        localStorage.setItem(STORAGE_USER_KEY, currentUser);
+        localStorage.setItem(STORAGE_USER, currentUser);
       } else {
-        localStorage.removeItem(STORAGE_USER_KEY);
+        localStorage.removeItem(STORAGE_USER);
       }
     }
 
+    // ----- Инициализация -----
     function initializeAll() {
       loadPasswordsFromStorage();
-      loadDataFromStorage();
+      loadDataFromStorage();   // dataStore будет восстановлен
       loadLogFromStorage();
       loadSessionFromStorage();
     }
@@ -517,7 +520,7 @@
       });
     }
 
-    // ---------- Управление паролями ----------
+    // ---------- Пароли ----------
     function isPasswordsSet() {
       return LOGINS.every(login => userPasswords[login] && userPasswords[login].length > 0);
     }
@@ -550,7 +553,7 @@
 
     resetPasswordsBtn.addEventListener('click', () => {
       if (confirm('Вы уверены, что хотите сбросить все пароли? После этого потребуется заново задать их.')) {
-        localStorage.removeItem(STORAGE_PASS_KEY);
+        localStorage.removeItem(STORAGE_PASS);
         userPasswords = {};
         updateAuthUI();
         if (!isPasswordsSet()) {
@@ -610,9 +613,9 @@
       rowsContainer.innerHTML = '<div style="color:white; padding:20px;">Войдите для просмотра дашборда</div>';
     });
 
+    // Финальная отрисовка
     populateLoginSelect();
     updateAuthUI();
-
     if (currentUser) {
       renderDashboard();
     } else {
