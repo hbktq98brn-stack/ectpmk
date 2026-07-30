@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Система контроля ЭЦП</title>
-  <!-- Firebase SDK (можно удалить, если не нужна облачная синхронизация) -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
   <style>
@@ -101,7 +100,7 @@
     const STORAGE_PASS = 'ecp_passwords';
     const STORAGE_USER = 'ecp_current_user';
 
-    // Firebase (необязательно)
+    // Firebase
     let db = null;
     try {
       const firebaseConfig = {
@@ -125,7 +124,7 @@
     let dataStore = { fk: [], kontur: [], sbis: [] };
     let userPasswords = {};
 
-    // ---------- ХРАНЕНИЕ ----------
+    // ---------- ХРАНЕНИЕ ДАННЫХ РЕЕСТРОВ ----------
     function loadLocalData() {
       const raw = localStorage.getItem(STORAGE_DATA);
       if (raw) {
@@ -155,14 +154,58 @@
       document.getElementById('syncStatus').textContent = db ? '✅ Синхронизировано' : '💾 Локально';
     }
 
-    // ---------- ПАРОЛИ И СЕССИЯ ----------
-    function loadPasswords() {
-      const raw = localStorage.getItem(STORAGE_PASS);
-      userPasswords = raw ? JSON.parse(raw) : {};
+    // ---------- ПАРОЛИ (ОБЛАКО + ЛОКАЛЬНО) ----------
+    function loadPasswordsFromCloud() {
+      if (!db) return Promise.resolve(false);
+      return db.collection("ecp_data").doc("passwords").get()
+        .then(doc => {
+          if (doc.exists) {
+            const cloudPass = doc.data().passwords;
+            if (cloudPass && typeof cloudPass === 'object') {
+              userPasswords = cloudPass;
+              // Обновляем локальную копию
+              localStorage.setItem(STORAGE_PASS, JSON.stringify(userPasswords));
+              console.log('🔑 Пароли загружены из облака');
+              return true;
+            }
+          }
+          return false;
+        })
+        .catch(e => {
+          console.error('Ошибка загрузки паролей из облака:', e);
+          return false;
+        });
     }
-    function savePasswords() {
+
+    function savePasswordsToCloud() {
+      if (!db) return;
+      db.collection("ecp_data").doc("passwords").set({ passwords: userPasswords })
+        .then(() => console.log('🔑 Пароли сохранены в облако'))
+        .catch(e => console.error('Ошибка сохранения паролей в облако:', e));
+    }
+
+    function loadPasswordsFromLocal() {
+      const raw = localStorage.getItem(STORAGE_PASS);
+      if (raw) {
+        try {
+          userPasswords = JSON.parse(raw);
+          return true;
+        } catch(e) {}
+      }
+      return false;
+    }
+
+    function savePasswordsToLocal() {
       localStorage.setItem(STORAGE_PASS, JSON.stringify(userPasswords));
     }
+
+    // Сохраняем пароли и локально, и в облако
+    function savePasswords() {
+      savePasswordsToLocal();
+      savePasswordsToCloud();
+    }
+
+    // ---------- СЕССИЯ ----------
     function loadSession() {
       const saved = localStorage.getItem(STORAGE_USER);
       if (saved && LOGINS.includes(saved)) currentUser = saved;
@@ -173,14 +216,10 @@
     }
 
     // ---------- ИНИЦИАЛИЗАЦИЯ ----------
-    function init() {
-      loadPasswords();
+    async function init() {
       loadSession();
-      if (!loadLocalData()) {
-        dataStore = { fk: [], kontur: [], sbis: [] };
-        saveLocalData();
-      }
-      // Всегда заполняем список логинов
+
+      // Заполняем список логинов
       const select = document.getElementById('loginSelect');
       select.innerHTML = '<option value="">-- выберите логин --</option>';
       LOGINS.forEach(login => {
@@ -190,8 +229,67 @@
         select.appendChild(opt);
       });
 
+      // Загружаем пароли: сначала облако, потом локально
+      const cloudOk = await loadPasswordsFromCloud();
+      if (!cloudOk) {
+        loadPasswordsFromLocal();
+      }
+
+      // Загружаем данные реестров (аналогично)
+      let dataLoaded = false;
+      if (db) {
+        try {
+          const doc = await db.collection("ecp_data").doc("registries").get();
+          if (doc.exists) {
+            const cloudData = doc.data();
+            if (cloudData && Array.isArray(cloudData.fk) && Array.isArray(cloudData.kontur) && Array.isArray(cloudData.sbis)) {
+              dataStore = cloudData;
+              console.log('☁️ Данные реестров загружены из облака');
+              saveLocalData();
+              dataLoaded = true;
+            }
+          }
+        } catch (e) {
+          console.error('Ошибка загрузки данных реестров:', e);
+        }
+      }
+      if (!dataLoaded) {
+        loadLocalData();
+      }
+
+      // Подписка на изменения (реального времени)
+      if (db) {
+        db.collection("ecp_data").doc("registries").onSnapshot(doc => {
+          if (doc.exists) {
+            const cloudData = doc.data();
+            if (cloudData && cloudData.fk && cloudData.kontur && cloudData.sbis) {
+              if (JSON.stringify(dataStore) !== JSON.stringify(cloudData)) {
+                dataStore = cloudData;
+                saveLocalData();
+                if (currentUser) renderDashboard();
+              }
+            }
+          }
+        });
+        // Подписка на изменения паролей (чтобы подхватывать смену с других браузеров)
+        db.collection("ecp_data").doc("passwords").onSnapshot(doc => {
+          if (doc.exists) {
+            const newPass = doc.data().passwords;
+            if (newPass && JSON.stringify(userPasswords) !== JSON.stringify(newPass)) {
+              userPasswords = newPass;
+              savePasswordsToLocal();
+              console.log('🔄 Пароли обновлены из облака');
+              // Если мы на экране входа, обновим UI
+              if (!currentUser) updateAuthUI();
+            }
+          }
+        });
+      }
+
       updateAuthUI();
-      if (!isPasswordsSet()) showSetupModal();
+      if (!isPasswordsSet()) {
+        showSetupModal();
+      }
 
       if (currentUser) {
         renderDashboard();
@@ -299,7 +397,6 @@
     }
     window.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('active'); });
 
-    // Вспомогательные
     function getDaysLeft(date) {
       if (!date) return null;
       const end = new Date(date);
@@ -312,7 +409,7 @@
       return arr.length ? Math.max(...arr.map(r => parseInt(r.number) || 0)) + 1 : 1;
     }
 
-    // ========== ИСПРАВЛЕННЫЙ РЕДАКТОР ==========
+    // ========== РЕДАКТОР СВОДНОГО РЕЕСТРА ==========
     function openRegistryEditor(provider) {
       const records = dataStore[provider] || [];
       const provLabel = providers.find(p => p.key === provider).label;
@@ -373,7 +470,6 @@
         }).join('');
       }
 
-      // Глобальные функции
       window._editRow = function(btn) {
         const row = btn.closest('tr');
         if (!row) return;
@@ -390,16 +486,13 @@
         const row = btn.closest('tr');
         if (!row) return;
         const id = row.dataset.id;
-        console.log('💾 Сохраняем строку', id);
-
-        // Ищем элементы строго по ячейкам
         const dateStartInput = row.querySelector('td:nth-child(3) input[type="date"]');
         const dateEndInput   = row.querySelector('td:nth-child(4) input[type="date"]');
         const typeSelect     = row.querySelector('td:nth-child(5) select');
         const installCheck   = row.querySelector('td:nth-child(9) input[type="checkbox"]');
 
         if (!dateStartInput || !dateEndInput || !typeSelect || !installCheck) {
-          console.error('Не найдены поля дат / типа / чекбокса');
+          console.error('Не найдены поля');
           return;
         }
 
@@ -417,11 +510,7 @@
         if (record) {
           Object.assign(record, { number, fio, dateStart, dateEnd, type, empNumber, room, installed });
           fullSave();
-          console.log('✅ Сохранено');
         }
-
-        // Очищаем поиск и обновляем
-        const searchInput = document.getElementById('searchInput');
         if (searchInput) searchInput.value = '';
         renderTable('');
         renderDashboard();
@@ -436,7 +525,6 @@
           if (idx !== -1) {
             records.splice(idx, 1);
             fullSave();
-            const searchInput = document.getElementById('searchInput');
             if (searchInput) searchInput.value = '';
             renderTable('');
             renderDashboard();
@@ -444,7 +532,6 @@
         }
       };
 
-      // Кнопка создания
       document.getElementById('addRecordBtn').addEventListener('click', () => {
         const newRec = {
           id: generateId(),
@@ -459,13 +546,11 @@
         };
         records.push(newRec);
         fullSave();
-        const searchInput = document.getElementById('searchInput');
         if (searchInput) searchInput.value = '';
         renderTable('');
         renderDashboard();
       });
 
-      // Поиск
       if (searchInput) {
         searchInput.addEventListener('input', () => renderTable(searchInput.value));
       }
@@ -566,7 +651,7 @@
         });
         if (!ok) { alert('Заполните все поля'); return; }
         userPasswords = newPass;
-        savePasswords();
+        savePasswords(); // сохранит и локально, и в облако
         modal.classList.remove('active');
         updateAuthUI();
       };
