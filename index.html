@@ -107,10 +107,7 @@
     .btn:hover { background: #3498db; }
     .btn-logout { background: #7f8c8d; }
     .btn-logout:hover { background: #95a5a6; }
-    .btn-delete {
-      background: #c0392b;
-      margin-left: 5px;
-    }
+    .btn-delete { background: #c0392b; margin-left: 5px; }
     .btn-delete:hover { background: #e74c3c; }
     .row {
       display: flex;
@@ -254,6 +251,12 @@
     .search-box input { flex: 1; }
     .actions { display: flex; gap: 8px; margin-top: 12px; justify-content: flex-end; }
     .hidden { display: none; }
+    .number-cell {
+      text-align: center;
+      font-weight: bold;
+      background: #1e2b3c;
+      user-select: none;
+    }
     @media (max-width: 1100px) {
       .card { flex: 1 1 calc(50% - 15px); }
     }
@@ -262,7 +265,7 @@
 <body>
 <div class="dashboard" id="dashboardApp">
   <div class="header">
-    <!-- Вставьте путь к вашему логотипу: style="background-image: url('2C50543E-3D95-4EB1-96AA-6D08F5790A57.jpeg');" -->
+    <!-- Вставьте путь к логотипу: style="background-image: url('logo.png');" -->
     <div class="logo-placeholder" id="logoBox" title="Логотип (2x2 см)">📷<br>лого</div>
     <div class="title">Система контроля электронных-цифровых подписей</div>
     <div class="user-block" id="authBlock">
@@ -295,10 +298,8 @@
 
 <script>
   (function() {
-    // ---------- Список логинов (без паролей) ----------
+    // ---------- Список логинов ----------
     const LOGINS = ["Красилова Н.", "Прохоров А.", "Полякова Е."];
-
-    // Загружаемые из localStorage пароли
     let userPasswords = {};
 
     // Основные данные
@@ -312,7 +313,6 @@
 
     // Загрузка из localStorage
     function loadFromStorage() {
-      // Данные
       const savedData = localStorage.getItem('ecp_dashboard_data');
       if (savedData) {
         try {
@@ -320,17 +320,14 @@
           if (parsed.fk && parsed.kontur && parsed.sbis) dataStore = parsed;
         } catch(e){}
       }
-      // Логи
       const logSaved = localStorage.getItem('ecp_dashboard_log');
       if (logSaved) {
         try { changeLog = JSON.parse(logSaved); } catch(e){}
       }
-      // Пароли
       const savedPass = localStorage.getItem('ecp_passwords');
       if (savedPass) {
         try { userPasswords = JSON.parse(savedPass); } catch(e){}
       }
-      // Сессия
       const savedUser = localStorage.getItem('ecp_current_user');
       if (savedUser && LOGINS.includes(savedUser)) {
         currentUser = savedUser;
@@ -347,13 +344,11 @@
     }
 
     function logAction(action, details) {
-      const entry = {
+      changeLog.push({
         user: currentUser || 'неизвестный',
         datetime: new Date().toLocaleString(),
-        action: action,
-        details: details
-      };
-      changeLog.push(entry);
+        action, details
+      });
       saveToStorage();
     }
 
@@ -395,7 +390,6 @@
       { key: 'sbis', label: 'СБИС' }
     ];
 
-    // Заполнение выпадающего списка логинов
     function populateLoginSelect() {
       const select = document.getElementById('loginSelect');
       select.innerHTML = '<option value="">-- выберите логин --</option>';
@@ -481,6 +475,16 @@
       if (e.target === modal) modal.classList.remove('active');
     });
 
+    // Автонумерация: следующий номер для провайдера
+    function getNextNumber(provider) {
+      const records = dataStore[provider] || [];
+      if (records.length === 0) return 1;
+      const numbers = records
+        .map(r => parseInt(r.number, 10))
+        .filter(n => !isNaN(n));
+      return numbers.length ? Math.max(...numbers) + 1 : 1;
+    }
+
     function openRegistryEditor(provider) {
       const records = dataStore[provider] || [];
       const provLabel = providerConfig.find(p=>p.key===provider).label;
@@ -517,7 +521,7 @@
           const days = getDaysLeft(r.dateEnd);
           return `
             <tr data-id="${r.id}">
-              <td>${r.number || ''}</td>
+              <td class="number-cell">${r.number || ''}</td>
               <td contenteditable="false">${r.fio || ''}</td>
               <td><input type="date" value="${r.dateStart || ''}" disabled></td>
               <td><input type="date" value="${r.dateEnd || ''}" disabled></td>
@@ -541,7 +545,6 @@
           `;
         }).join('');
 
-        // Обработчики кнопок
         tbody.querySelectorAll('.editBtn').forEach(btn => {
           btn.addEventListener('click', (e) => {
             const row = e.target.closest('tr');
@@ -564,8 +567,10 @@
                 records.splice(idx, 1);
                 logAction('delete_record', `Провайдер ${provider}, id ${id}`);
                 saveToStorage();
-                renderTable(searchInput.value);
-                renderDashboard(); // обновить индикаторы
+                // Очищаем поиск и показываем все записи
+                searchInput.value = '';
+                renderTable('');
+                renderDashboard();
               }
             }
           });
@@ -573,7 +578,8 @@
       }
 
       function enterEditMode(row) {
-        row.querySelectorAll('[contenteditable="false"]').forEach(cell => {
+        // Номер не редактируется (ячейка с классом number-cell)
+        row.querySelectorAll('td[contenteditable="false"]:not(.number-cell)').forEach(cell => {
           cell.contentEditable = 'true';
           cell.style.background = '#34495e';
         });
@@ -585,6 +591,7 @@
       function saveRow(row, provider) {
         const id = row.dataset.id;
         const cells = row.querySelectorAll('td');
+        // Номер берём из number-cell, но не изменяем
         const number = cells[0].textContent.trim();
         const fio = cells[1].textContent.trim();
         const dateStart = row.querySelector('input[type="date"]:nth-of-type(1)').value;
@@ -601,25 +608,35 @@
           logAction('update_record', `Провайдер ${provider}, id ${id}`);
         }
         saveToStorage();
-        renderTable(searchInput.value);
-        renderDashboard(); // обновить индикаторы
+        // Очищаем поиск, чтобы запись не исчезла
+        searchInput.value = '';
+        renderTable('');
+        renderDashboard();
       }
 
       document.getElementById('addRecordBtn').addEventListener('click', () => {
+        const newNumber = getNextNumber(provider);
         const newRec = {
           id: generateId(),
-          number: '', fio: '', dateStart: '', dateEnd: '', type: 'Р',
-          empNumber: '', room: '', installed: false
+          number: newNumber,
+          fio: '',
+          dateStart: '',
+          dateEnd: '',
+          type: 'Р',
+          empNumber: '',
+          room: '',
+          installed: false
         };
         records.push(newRec);
-        logAction('add_record', `Провайдер ${provider}, новая запись`);
+        logAction('add_record', `Провайдер ${provider}, номер ${newNumber}`);
         saveToStorage();
-        renderTable(searchInput.value);
+        searchInput.value = '';
+        renderTable('');
         renderDashboard();
       });
 
       searchInput.addEventListener('input', () => renderTable(searchInput.value));
-      renderTable();
+      renderTable('');
     }
 
     function openFilteredList(provider, type) {
@@ -670,7 +687,7 @@
       });
     }
 
-    // ---------- Первичная настройка паролей ----------
+    // Первичная настройка паролей
     function isPasswordsSet() {
       return LOGINS.every(login => userPasswords[login] && userPasswords[login].length > 0);
     }
@@ -678,11 +695,7 @@
     function showSetupModal() {
       let html = '<h3>Первичная настройка паролей</h3><p>Задайте пароль для каждого логина:</p>';
       LOGINS.forEach(login => {
-        html += `
-          <div style="margin:10px 0;">
-            <label>${login}</label>
-            <input type="password" id="setup_${login.replace(/\s/g,'')}" placeholder="Пароль" style="width:250px;">
-          </div>`;
+        html += `<div style="margin:10px 0;"><label>${login}</label> <input type="password" id="setup_${login.replace(/\s/g,'')}" placeholder="Пароль" style="width:250px;"></div>`;
       });
       html += '<button class="btn" id="saveSetupBtn">Сохранить пароли</button>';
       openModal('Настройка доступа', html);
@@ -705,7 +718,7 @@
       });
     }
 
-    // ---------- Авторизация ----------
+    // Авторизация
     const loginSelect = document.getElementById('loginSelect');
     const passwordInput = document.getElementById('passwordInput');
     const loginBtn = document.getElementById('loginBtn');
@@ -724,11 +737,7 @@
         loginBtn.classList.remove('hidden');
         logoutBtn.classList.add('hidden');
         document.querySelector('.user-block').style.background = 'rgba(0,0,0,0.4)';
-        if (!isPasswordsSet()) {
-          loginBtn.disabled = true;
-        } else {
-          loginBtn.disabled = false;
-        }
+        loginBtn.disabled = !isPasswordsSet();
       }
     }
 
@@ -736,7 +745,7 @@
       const login = loginSelect.value;
       const pass = passwordInput.value;
       if (!login) return alert('Выберите логин');
-      if (!userPasswords[login]) return alert('Пароль для данного логина не задан.');
+      if (!userPasswords[login]) return alert('Пароль не задан.');
       if (userPasswords[login] === pass) {
         currentUser = login;
         localStorage.setItem('ecp_current_user', login);
@@ -758,7 +767,7 @@
       rowsContainer.innerHTML = '<div style="color:white; padding:20px;">Войдите для просмотра дашборда</div>';
     });
 
-    // ---------- Инициализация ----------
+    // Инициализация
     populateLoginSelect();
     loadFromStorage();
     updateAuthUI();
