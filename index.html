@@ -265,7 +265,7 @@
 <body>
 <div class="dashboard" id="dashboardApp">
   <div class="header">
-    <!-- Вставьте путь к логотипу: style="background-image: url('logo.png');" -->
+    <!-- ВСТАВЬТЕ ПУТЬ К ЛОГОТИПУ: style="background-image: url('logo.png');" -->
     <div class="logo-placeholder" id="logoBox" title="Логотип (2x2 см)">📷<br>лого</div>
     <div class="title">Система контроля электронных-цифровых подписей</div>
     <div class="user-block" id="authBlock">
@@ -298,12 +298,16 @@
 
 <script>
   (function() {
-    // ---------- Список логинов ----------
+    // ---------- Константы ----------
     const LOGINS = ["Красилова Н.", "Прохоров А.", "Полякова Е."];
-    let userPasswords = {};
+    const STORAGE_DATA_KEY = 'ecp_dashboard_data';
+    const STORAGE_LOG_KEY = 'ecp_dashboard_log';
+    const STORAGE_PASS_KEY = 'ecp_passwords';
+    const STORAGE_USER_KEY = 'ecp_current_user';
 
-    // Основные данные
+    // ---------- Глобальные переменные ----------
     let currentUser = null;
+    // dataStore инициализируется ЗАГРУЗКОЙ из localStorage, затем если нет - пустой
     let dataStore = {
       fk: [],
       kontur: [],
@@ -311,45 +315,103 @@
     };
     let changeLog = [];
 
-    // Загрузка из localStorage
-    function loadFromStorage() {
-      const savedData = localStorage.getItem('ecp_dashboard_data');
-      if (savedData) {
+    // ---------- Функции работы с хранилищем ----------
+    function loadDataFromStorage() {
+      const saved = localStorage.getItem(STORAGE_DATA_KEY);
+      if (saved) {
         try {
-          const parsed = JSON.parse(savedData);
-          if (parsed.fk && parsed.kontur && parsed.sbis) dataStore = parsed;
-        } catch(e){}
-      }
-      const logSaved = localStorage.getItem('ecp_dashboard_log');
-      if (logSaved) {
-        try { changeLog = JSON.parse(logSaved); } catch(e){}
-      }
-      const savedPass = localStorage.getItem('ecp_passwords');
-      if (savedPass) {
-        try { userPasswords = JSON.parse(savedPass); } catch(e){}
-      }
-      const savedUser = localStorage.getItem('ecp_current_user');
-      if (savedUser && LOGINS.includes(savedUser)) {
-        currentUser = savedUser;
+          const parsed = JSON.parse(saved);
+          // Проверяем структуру
+          if (parsed && typeof parsed === 'object' && 'fk' in parsed && 'kontur' in parsed && 'sbis' in parsed) {
+            dataStore = parsed;
+            console.log('Данные загружены из localStorage:', dataStore);
+          } else {
+            console.warn('Структура данных в localStorage нарушена, сброс.');
+            dataStore = { fk: [], kontur: [], sbis: [] };
+            saveDataToStorage(); // сохраним чистую структуру
+          }
+        } catch (e) {
+          console.error('Ошибка парсинга данных:', e);
+          dataStore = { fk: [], kontur: [], sbis: [] };
+          saveDataToStorage();
+        }
+      } else {
+        // Первый запуск, сохраним пустую структуру
+        saveDataToStorage();
       }
     }
 
-    function saveToStorage() {
-      localStorage.setItem('ecp_dashboard_data', JSON.stringify(dataStore));
-      localStorage.setItem('ecp_dashboard_log', JSON.stringify(changeLog));
+    function saveDataToStorage() {
+      localStorage.setItem(STORAGE_DATA_KEY, JSON.stringify(dataStore));
+      console.log('Данные сохранены в localStorage:', dataStore);
+    }
+
+    function loadLogFromStorage() {
+      const saved = localStorage.getItem(STORAGE_LOG_KEY);
+      if (saved) {
+        try {
+          changeLog = JSON.parse(saved);
+        } catch (e) {
+          changeLog = [];
+        }
+      }
+    }
+
+    function saveLogToStorage() {
+      localStorage.setItem(STORAGE_LOG_KEY, JSON.stringify(changeLog));
+    }
+
+    function loadPasswordsFromStorage() {
+      const saved = localStorage.getItem(STORAGE_PASS_KEY);
+      if (saved) {
+        try {
+          userPasswords = JSON.parse(saved);
+        } catch (e) {
+          userPasswords = {};
+        }
+      }
     }
 
     function savePasswordsToStorage() {
-      localStorage.setItem('ecp_passwords', JSON.stringify(userPasswords));
+      localStorage.setItem(STORAGE_PASS_KEY, JSON.stringify(userPasswords));
     }
+
+    function loadSessionFromStorage() {
+      const saved = localStorage.getItem(STORAGE_USER_KEY);
+      if (saved && LOGINS.includes(saved)) {
+        currentUser = saved;
+      }
+    }
+
+    function saveSessionToStorage() {
+      if (currentUser) {
+        localStorage.setItem(STORAGE_USER_KEY, currentUser);
+      } else {
+        localStorage.removeItem(STORAGE_USER_KEY);
+      }
+    }
+
+    // Инициализация: загружаем всё до любых действий
+    function initializeData() {
+      loadPasswordsFromStorage();
+      loadDataFromStorage();   // dataStore теперь точно из localStorage
+      loadLogFromStorage();
+      loadSessionFromStorage();
+    }
+
+    // Вызываем сразу
+    initializeData();
+
+    let userPasswords = {};
 
     function logAction(action, details) {
       changeLog.push({
         user: currentUser || 'неизвестный',
         datetime: new Date().toLocaleString(),
-        action, details
+        action,
+        details
       });
-      saveToStorage();
+      saveLogToStorage();
     }
 
     function getDaysLeft(endDateStr) {
@@ -376,6 +438,7 @@
       return { valid, warn7, warn1, total: filtered.length };
     }
 
+    // DOM элементы
     const rowsContainer = document.getElementById('rowsContainer');
     const uninstalledCard = document.getElementById('uninstalledCard');
     const uninstalledCountSpan = document.getElementById('uninstalledCount');
@@ -460,7 +523,9 @@
 
     function updateUninstalledCount() {
       let total = 0;
-      Object.values(dataStore).forEach(arr => arr.forEach(r => { if (!r.installed) total++; }));
+      for (let provider in dataStore) {
+        dataStore[provider].forEach(r => { if (!r.installed) total++; });
+      }
       uninstalledCountSpan.textContent = total;
     }
 
@@ -475,7 +540,6 @@
       if (e.target === modal) modal.classList.remove('active');
     });
 
-    // Автонумерация: следующий номер для провайдера
     function getNextNumber(provider) {
       const records = dataStore[provider] || [];
       if (records.length === 0) return 1;
@@ -487,7 +551,7 @@
 
     function openRegistryEditor(provider) {
       const records = dataStore[provider] || [];
-      const provLabel = providerConfig.find(p=>p.key===provider).label;
+      const provLabel = providerConfig.find(p => p.key === provider).label;
 
       let html = `
         <div class="search-box">
@@ -545,6 +609,7 @@
           `;
         }).join('');
 
+        // Обработчики кнопок
         tbody.querySelectorAll('.editBtn').forEach(btn => {
           btn.addEventListener('click', (e) => {
             const row = e.target.closest('tr');
@@ -566,8 +631,7 @@
               if (idx !== -1) {
                 records.splice(idx, 1);
                 logAction('delete_record', `Провайдер ${provider}, id ${id}`);
-                saveToStorage();
-                // Очищаем поиск и показываем все записи
+                saveDataToStorage();   // СОХРАНЯЕМ СРАЗУ
                 searchInput.value = '';
                 renderTable('');
                 renderDashboard();
@@ -578,7 +642,6 @@
       }
 
       function enterEditMode(row) {
-        // Номер не редактируется (ячейка с классом number-cell)
         row.querySelectorAll('td[contenteditable="false"]:not(.number-cell)').forEach(cell => {
           cell.contentEditable = 'true';
           cell.style.background = '#34495e';
@@ -591,7 +654,6 @@
       function saveRow(row, provider) {
         const id = row.dataset.id;
         const cells = row.querySelectorAll('td');
-        // Номер берём из number-cell, но не изменяем
         const number = cells[0].textContent.trim();
         const fio = cells[1].textContent.trim();
         const dateStart = row.querySelector('input[type="date"]:nth-of-type(1)').value;
@@ -606,9 +668,8 @@
         if (record) {
           Object.assign(record, { number, fio, dateStart, dateEnd, type, empNumber, room, installed });
           logAction('update_record', `Провайдер ${provider}, id ${id}`);
+          saveDataToStorage();   // СОХРАНЯЕМ
         }
-        saveToStorage();
-        // Очищаем поиск, чтобы запись не исчезла
         searchInput.value = '';
         renderTable('');
         renderDashboard();
@@ -629,7 +690,7 @@
         };
         records.push(newRec);
         logAction('add_record', `Провайдер ${provider}, номер ${newNumber}`);
-        saveToStorage();
+        saveDataToStorage();   // СОХРАНЯЕМ СРАЗУ
         searchInput.value = '';
         renderTable('');
         renderDashboard();
@@ -642,7 +703,7 @@
     function openFilteredList(provider, type) {
       const records = dataStore[provider] || [];
       const filtered = records.filter(r => r.type === type);
-      const provLabel = providerConfig.find(p=>p.key===provider).label;
+      const provLabel = providerConfig.find(p => p.key === provider).label;
       const typeNames = { 'Р':'Руководство', 'РД':'Руководство департаментов', 'С':'Сотрудники МК' };
       let html = `<table><thead><tr><th>Номер</th><th>ФИО</th><th>Дата окончания</th><th>Действует дней</th><th>Установлена</th></tr></thead><tbody>`;
       filtered.forEach(r => {
@@ -655,9 +716,11 @@
 
     function openUninstalledList() {
       let all = [];
-      Object.entries(dataStore).forEach(([provider, records]) => {
-        records.forEach(r => { if (!r.installed) all.push({...r, provider}); });
-      });
+      for (let provider in dataStore) {
+        dataStore[provider].forEach(r => {
+          if (!r.installed) all.push({...r, provider});
+        });
+      }
       let html = `<table><thead><tr><th>Провайдер</th><th>Номер</th><th>ФИО</th><th>Дата окончания</th><th>Тип</th><th>Установлена</th><th>Действие</th></tr></thead><tbody>`;
       all.forEach(r => {
         html += `<tr data-id="${r.id}" data-provider="${r.provider}">
@@ -679,7 +742,7 @@
           if (rec) {
             rec.installed = checked;
             logAction('install_toggle', `Провайдер ${provider}, id ${id}, установлена=${checked}`);
-            saveToStorage();
+            saveDataToStorage();   // СОХРАНЯЕМ
             renderDashboard();
             modal.classList.remove('active');
           }
@@ -748,7 +811,7 @@
       if (!userPasswords[login]) return alert('Пароль не задан.');
       if (userPasswords[login] === pass) {
         currentUser = login;
-        localStorage.setItem('ecp_current_user', login);
+        saveSessionToStorage();
         logAction('login', `Пользователь ${login} вошел`);
         updateAuthUI();
         renderDashboard();
@@ -761,27 +824,29 @@
     logoutBtn.addEventListener('click', () => {
       logAction('logout', `Пользователь ${currentUser} вышел`);
       currentUser = null;
-      localStorage.removeItem('ecp_current_user');
+      saveSessionToStorage();
       updateAuthUI();
       renderDashboard();
       rowsContainer.innerHTML = '<div style="color:white; padding:20px;">Войдите для просмотра дашборда</div>';
     });
 
-    // Инициализация
+    // Финальная инициализация UI
     populateLoginSelect();
-    loadFromStorage();
     updateAuthUI();
+
     if (!isPasswordsSet()) {
       showSetupModal();
     } else {
       loginBtn.disabled = false;
     }
+
     if (currentUser) {
       renderDashboard();
     } else {
       rowsContainer.innerHTML = '<div style="color:white; padding:20px;">Пожалуйста, войдите в систему</div>';
     }
 
+    // Автообновление раз в 60 секунд
     setInterval(() => {
       if (currentUser) renderDashboard();
     }, 60000);
