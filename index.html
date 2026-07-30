@@ -11,7 +11,6 @@
       box-sizing: border-box;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
-
     body {
       background: linear-gradient(135deg, #1e2b3c 0%, #0f1a26 100%);
       min-height: 100vh;
@@ -20,7 +19,6 @@
       align-items: flex-start;
       padding: 15px;
     }
-
     .dashboard {
       width: 100%;
       max-width: 1600px;
@@ -35,7 +33,6 @@
       flex-direction: column;
       gap: 20px;
     }
-
     .header {
       display: flex;
       align-items: center;
@@ -43,7 +40,6 @@
       margin-bottom: 5px;
       flex-wrap: wrap;
     }
-
     .logo-placeholder {
       width: 2cm;
       height: 2cm;
@@ -62,7 +58,6 @@
       background-size: cover;
       background-position: center;
     }
-
     .title {
       font-size: clamp(1.6rem, 3vw, 2.4rem);
       font-weight: 700;
@@ -71,7 +66,6 @@
       text-shadow: 0 4px 12px black;
       flex: 1;
     }
-
     .user-block {
       display: flex;
       align-items: center;
@@ -81,11 +75,9 @@
       border-radius: 30px;
       color: #ccc;
     }
-
     select, input, button {
       outline: none;
     }
-
     .user-block select {
       background: #2c3e50;
       color: white;
@@ -94,7 +86,6 @@
       border-radius: 20px;
       font-weight: 500;
     }
-
     .user-block input {
       background: #2c3e50;
       border: none;
@@ -103,7 +94,6 @@
       color: white;
       width: 120px;
     }
-
     .btn {
       background: #2980b9;
       border: none;
@@ -114,22 +104,19 @@
       font-weight: 600;
       transition: 0.2s;
     }
-    .btn:hover {
-      background: #3498db;
+    .btn:hover { background: #3498db; }
+    .btn-logout { background: #7f8c8d; }
+    .btn-logout:hover { background: #95a5a6; }
+    .btn-delete {
+      background: #c0392b;
+      margin-left: 5px;
     }
-    .btn-logout {
-      background: #7f8c8d;
-    }
-    .btn-logout:hover {
-      background: #95a5a6;
-    }
-
+    .btn-delete:hover { background: #e74c3c; }
     .row {
       display: flex;
       gap: 15px;
       flex-wrap: wrap;
     }
-
     .card {
       background: rgba(20, 30, 40, 0.7);
       backdrop-filter: blur(8px);
@@ -147,40 +134,34 @@
       position: relative;
       overflow: hidden;
     }
-
     .card:hover {
       transform: translateY(-3px);
       box-shadow: 0 15px 30px rgba(0,160,255,0.3);
       border-color: rgba(255,255,255,0.3);
     }
-
     .card-header {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
       margin-bottom: 10px;
     }
-
     .card-title {
       font-weight: 600;
       font-size: 1rem;
       opacity: 0.9;
     }
-
     .badge {
       font-weight: 800;
       font-size: 1.4rem;
       color: #f1c40f;
       text-shadow: 0 0 8px black;
     }
-
     .indicators {
       display: flex;
       gap: 6px;
       margin-top: auto;
       flex-wrap: wrap;
     }
-
     .indicator {
       flex: 1;
       min-width: 50px;
@@ -193,21 +174,16 @@
       color: white;
       transition: background 0.3s;
     }
-
-    .indicator.green {
-      background: #27ae60;
-    }
+    .indicator.green { background: #27ae60; }
     .indicator.red {
       background: #e74c3c;
       animation: pulse-red 1s infinite;
     }
-
     @keyframes pulse-red {
       0% { box-shadow: 0 0 5px #e74c3c; }
       50% { box-shadow: 0 0 20px #e74c3c; }
       100% { box-shadow: 0 0 5px #e74c3c; }
     }
-
     .full-width-card {
       flex: 1 1 100%;
       background: rgba(20, 30, 40, 0.7);
@@ -220,10 +196,7 @@
       transition: 0.2s;
       text-align: center;
     }
-    .full-width-card:hover {
-      background: rgba(30, 40, 55, 0.8);
-    }
-
+    .full-width-card:hover { background: rgba(30, 40, 55, 0.8); }
     .modal {
       display: none;
       position: fixed;
@@ -234,11 +207,7 @@
       align-items: center;
       z-index: 1000;
     }
-
-    .modal.active {
-      display: flex;
-    }
-
+    .modal.active { display: flex; }
     .modal-content {
       background: #1e2b3c;
       border-radius: 24px;
@@ -250,7 +219,6 @@
       color: white;
       box-shadow: 0 30px 60px black;
     }
-
     .modal-header {
       display: flex;
       justify-content: space-between;
@@ -258,7 +226,6 @@
       font-size: 1.4rem;
       font-weight: bold;
     }
-
     .close-btn {
       background: none;
       border: none;
@@ -266,25 +233,14 @@
       font-size: 2rem;
       cursor: pointer;
     }
-
     table {
       width: 100%;
       border-collapse: collapse;
       margin-top: 10px;
       font-size: 0.85rem;
     }
-
-    th {
-      background: #2c3e50;
-      padding: 8px;
-      text-align: left;
-    }
-
-    td, th {
-      border: 1px solid #34495e;
-      padding: 6px;
-    }
-
+    th { background: #2c3e50; padding: 8px; text-align: left; }
+    td, th { border: 1px solid #34495e; padding: 6px; }
     input[type="text"], input[type="date"], select {
       background: #2c3e50;
       color: white;
@@ -294,47 +250,24 @@
       width: 100%;
       box-sizing: border-box;
     }
-
-    .search-box {
-      margin-bottom: 10px;
-      display: flex;
-      gap: 10px;
-    }
-
-    .search-box input {
-      flex: 1;
-    }
-
-    .actions {
-      display: flex;
-      gap: 8px;
-      margin-top: 12px;
-      justify-content: flex-end;
-    }
-
-    .hidden {
-      display: none;
-    }
-
+    .search-box { margin-bottom: 10px; display: flex; gap: 10px; }
+    .search-box input { flex: 1; }
+    .actions { display: flex; gap: 8px; margin-top: 12px; justify-content: flex-end; }
+    .hidden { display: none; }
     @media (max-width: 1100px) {
-      .card {
-        flex: 1 1 calc(50% - 15px);
-      }
+      .card { flex: 1 1 calc(50% - 15px); }
     }
   </style>
 </head>
 <body>
 <div class="dashboard" id="dashboardApp">
   <div class="header">
-    <!-- ВСТАВЬТЕ ПУТЬ К ЛОГОТИПУ ЗДЕСЬ: style="background-image: url('ваш_файл.png');" -->
+    <!-- Вставьте путь к вашему логотипу: style="background-image: url('logo.png');" -->
     <div class="logo-placeholder" id="logoBox" title="Логотип (2x2 см)">📷<br>лого</div>
     <div class="title">Система контроля электронных-цифровых подписей</div>
     <div class="user-block" id="authBlock">
       <select id="loginSelect">
         <option value="">-- выберите логин --</option>
-        <option value="Красилова Н.">Красилова Н.</option>
-        <option value="Прохоров А.">Прохоров А.</option>
-        <option value="Полякова Е.">Полякова Е.</option>
       </select>
       <input type="password" id="passwordInput" placeholder="Пароль">
       <button class="btn" id="loginBtn">Войти</button>
@@ -362,13 +295,13 @@
 
 <script>
   (function() {
-    // Пользователи
-    const USERS = {
-      "Красилова Н.": "ZxC1234",
-      "Прохоров А.": "VbN5678",
-      "Полякова Е.": "SFr3478"
-    };
+    // ---------- Список логинов (без паролей) ----------
+    const LOGINS = ["Красилова Н.", "Прохоров А.", "Полякова Е."];
 
+    // Загружаемые из localStorage пароли
+    let userPasswords = {};
+
+    // Основные данные
     let currentUser = null;
     let dataStore = {
       fk: [],
@@ -377,24 +310,29 @@
     };
     let changeLog = [];
 
-    // Загрузка данных и сессии из localStorage
+    // Загрузка из localStorage
     function loadFromStorage() {
+      // Данные
       const savedData = localStorage.getItem('ecp_dashboard_data');
       if (savedData) {
         try {
           const parsed = JSON.parse(savedData);
-          if (parsed.fk && parsed.kontur && parsed.sbis) {
-            dataStore = parsed;
-          }
+          if (parsed.fk && parsed.kontur && parsed.sbis) dataStore = parsed;
         } catch(e){}
       }
+      // Логи
       const logSaved = localStorage.getItem('ecp_dashboard_log');
       if (logSaved) {
         try { changeLog = JSON.parse(logSaved); } catch(e){}
       }
-      // Восстановление сессии
+      // Пароли
+      const savedPass = localStorage.getItem('ecp_passwords');
+      if (savedPass) {
+        try { userPasswords = JSON.parse(savedPass); } catch(e){}
+      }
+      // Сессия
       const savedUser = localStorage.getItem('ecp_current_user');
-      if (savedUser && USERS[savedUser]) {
+      if (savedUser && LOGINS.includes(savedUser)) {
         currentUser = savedUser;
       }
     }
@@ -402,7 +340,10 @@
     function saveToStorage() {
       localStorage.setItem('ecp_dashboard_data', JSON.stringify(dataStore));
       localStorage.setItem('ecp_dashboard_log', JSON.stringify(changeLog));
-      // Сессия сохраняется отдельно при входе/выходе
+    }
+
+    function savePasswordsToStorage() {
+      localStorage.setItem('ecp_passwords', JSON.stringify(userPasswords));
     }
 
     function logAction(action, details) {
@@ -419,10 +360,8 @@
     function getDaysLeft(endDateStr) {
       if (!endDateStr) return null;
       const end = new Date(endDateStr);
-      const today = new Date();
-      today.setHours(0,0,0,0);
-      const diffTime = end.getTime() - today.getTime();
-      return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      const today = new Date(); today.setHours(0,0,0,0);
+      return Math.ceil((end.getTime() - today.getTime()) / (1000*60*60*24));
     }
 
     function generateId() {
@@ -451,17 +390,28 @@
     const closeModalBtn = document.getElementById('closeModalBtn');
 
     const providerConfig = [
-      { key: 'fk', label: 'ФК', rowTitle: 'Сводный реестр ЭЦП (ФК)' },
-      { key: 'kontur', label: 'КОНТУР', rowTitle: 'Сводный реестр ЭЦП (КОНТУР)' },
-      { key: 'sbis', label: 'СБИС', rowTitle: 'Сводный реестр ЭЦП (СБИС)' }
+      { key: 'fk', label: 'ФК' },
+      { key: 'kontur', label: 'КОНТУР' },
+      { key: 'sbis', label: 'СБИС' }
     ];
+
+    // Заполнение выпадающего списка логинов
+    function populateLoginSelect() {
+      const select = document.getElementById('loginSelect');
+      select.innerHTML = '<option value="">-- выберите логин --</option>';
+      LOGINS.forEach(login => {
+        const opt = document.createElement('option');
+        opt.value = login;
+        opt.textContent = login;
+        select.appendChild(opt);
+      });
+    }
 
     function renderDashboard() {
       if (!currentUser) {
         rowsContainer.innerHTML = '<div style="color:white; padding:20px;">Пожалуйста, войдите в систему</div>';
         return;
       }
-
       let html = '';
       providerConfig.forEach(prov => {
         const records = dataStore[prov.key] || [];
@@ -490,14 +440,10 @@
       updateUninstalledCount();
 
       document.querySelectorAll('.card[data-action="openRegistry"]').forEach(card => {
-        card.addEventListener('click', (e) => {
-          openRegistryEditor(card.dataset.provider);
-        });
+        card.addEventListener('click', () => openRegistryEditor(card.dataset.provider));
       });
       document.querySelectorAll('.card[data-action="openTypeList"]').forEach(card => {
-        card.addEventListener('click', (e) => {
-          openFilteredList(card.dataset.provider, card.dataset.type);
-        });
+        card.addEventListener('click', () => openFilteredList(card.dataset.provider, card.dataset.type));
       });
 
       uninstalledCard.onclick = () => openUninstalledList();
@@ -520,9 +466,7 @@
 
     function updateUninstalledCount() {
       let total = 0;
-      Object.values(dataStore).forEach(arr => {
-        arr.forEach(r => { if (!r.installed) total++; });
-      });
+      Object.values(dataStore).forEach(arr => arr.forEach(r => { if (!r.installed) total++; }));
       uninstalledCountSpan.textContent = total;
     }
 
@@ -546,13 +490,11 @@
           <input type="text" id="searchInput" placeholder="Поиск по таблице...">
         </div>
         <table id="registryTable">
-          <thead>
-            <tr>
-              <th>Номер</th><th>ФИО</th><th>Дата выпуска</th><th>Дата окончания</th>
-              <th>Тип ЭЦП</th><th>Номер сотрудника</th><th>Номер кабинета</th>
-              <th>Действует дней</th><th>Установлена</th><th>Действия</th>
-            </tr>
-          </thead>
+          <thead><tr>
+            <th>Номер</th><th>ФИО</th><th>Дата выпуска</th><th>Дата окончания</th>
+            <th>Тип ЭЦП</th><th>Номер сотрудника</th><th>Номер кабинета</th>
+            <th>Действует дней</th><th>Установлена</th><th>Действия</th>
+          </tr></thead>
           <tbody></tbody>
         </table>
         <div class="actions">
@@ -568,8 +510,8 @@
       function renderTable(filterText = '') {
         const filtered = records.filter(r => {
           if (!filterText) return true;
-          const search = filterText.toLowerCase();
-          return Object.values(r).some(val => String(val).toLowerCase().includes(search));
+          const s = filterText.toLowerCase();
+          return Object.values(r).some(v => String(v).toLowerCase().includes(s));
         });
         tbody.innerHTML = filtered.map(r => {
           const days = getDaysLeft(r.dateEnd);
@@ -593,11 +535,13 @@
               <td>
                 <button class="btn editBtn">Изменить</button>
                 <button class="btn saveBtn hidden">Сохранить</button>
+                <button class="btn btn-delete deleteBtn">Удалить</button>
               </td>
             </tr>
           `;
         }).join('');
 
+        // Обработчики кнопок
         tbody.querySelectorAll('.editBtn').forEach(btn => {
           btn.addEventListener('click', (e) => {
             const row = e.target.closest('tr');
@@ -608,6 +552,22 @@
           btn.addEventListener('click', (e) => {
             const row = e.target.closest('tr');
             saveRow(row, provider);
+          });
+        });
+        tbody.querySelectorAll('.deleteBtn').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const row = e.target.closest('tr');
+            const id = row.dataset.id;
+            if (confirm('Удалить запись?')) {
+              const idx = records.findIndex(r => r.id === id);
+              if (idx !== -1) {
+                records.splice(idx, 1);
+                logAction('delete_record', `Провайдер ${provider}, id ${id}`);
+                saveToStorage();
+                renderTable(searchInput.value);
+                renderDashboard(); // обновить индикаторы
+              }
+            }
           });
         });
       }
@@ -637,43 +597,28 @@
 
         const record = records.find(r => r.id === id);
         if (record) {
-          const old = {...record};
-          record.number = number;
-          record.fio = fio;
-          record.dateStart = dateStart;
-          record.dateEnd = dateEnd;
-          record.type = type;
-          record.empNumber = empNumber;
-          record.room = room;
-          record.installed = installed;
-          logAction('update_record', `Провайдер ${provider}, id ${id}, изменения сохранены`);
+          Object.assign(record, { number, fio, dateStart, dateEnd, type, empNumber, room, installed });
+          logAction('update_record', `Провайдер ${provider}, id ${id}`);
         }
         saveToStorage();
         renderTable(searchInput.value);
+        renderDashboard(); // обновить индикаторы
       }
 
       document.getElementById('addRecordBtn').addEventListener('click', () => {
-        const newRecord = {
+        const newRec = {
           id: generateId(),
-          number: '',
-          fio: '',
-          dateStart: '',
-          dateEnd: '',
-          type: 'Р',
-          empNumber: '',
-          room: '',
-          installed: false
+          number: '', fio: '', dateStart: '', dateEnd: '', type: 'Р',
+          empNumber: '', room: '', installed: false
         };
-        records.push(newRecord);
+        records.push(newRec);
         logAction('add_record', `Провайдер ${provider}, новая запись`);
         saveToStorage();
         renderTable(searchInput.value);
+        renderDashboard();
       });
 
-      searchInput.addEventListener('input', (e) => {
-        renderTable(e.target.value);
-      });
-
+      searchInput.addEventListener('input', () => renderTable(searchInput.value));
       renderTable();
     }
 
@@ -682,37 +627,24 @@
       const filtered = records.filter(r => r.type === type);
       const provLabel = providerConfig.find(p=>p.key===provider).label;
       const typeNames = { 'Р':'Руководство', 'РД':'Руководство департаментов', 'С':'Сотрудники МК' };
-
-      let html = `<table>
-        <thead><tr><th>Номер</th><th>ФИО</th><th>Дата окончания</th><th>Действует дней</th><th>Установлена</th></tr></thead>
-        <tbody>`;
+      let html = `<table><thead><tr><th>Номер</th><th>ФИО</th><th>Дата окончания</th><th>Действует дней</th><th>Установлена</th></tr></thead><tbody>`;
       filtered.forEach(r => {
         const days = getDaysLeft(r.dateEnd);
-        html += `<tr>
-          <td>${r.number || ''}</td><td>${r.fio || ''}</td><td>${r.dateEnd || ''}</td>
-          <td>${days !== null ? days : '—'}</td>
-          <td>${r.installed ? '✅' : '❌'}</td>
-        </tr>`;
+        html += `<tr><td>${r.number||''}</td><td>${r.fio||''}</td><td>${r.dateEnd||''}</td><td>${days!==null?days:'—'}</td><td>${r.installed?'✅':'❌'}</td></tr>`;
       });
       html += `</tbody></table>`;
       openModal(`Реестр ЭЦП (${typeNames[type]}) - ${provLabel}`, html);
     }
 
     function openUninstalledList() {
-      let allUninstalled = [];
+      let all = [];
       Object.entries(dataStore).forEach(([provider, records]) => {
-        records.forEach(r => {
-          if (!r.installed) allUninstalled.push({...r, provider});
-        });
+        records.forEach(r => { if (!r.installed) all.push({...r, provider}); });
       });
-
-      let html = `<table>
-        <thead><tr><th>Провайдер</th><th>Номер</th><th>ФИО</th><th>Дата окончания</th><th>Тип</th><th>Установлена</th><th>Действие</th></tr></thead>
-        <tbody>`;
-      allUninstalled.forEach(r => {
+      let html = `<table><thead><tr><th>Провайдер</th><th>Номер</th><th>ФИО</th><th>Дата окончания</th><th>Тип</th><th>Установлена</th><th>Действие</th></tr></thead><tbody>`;
+      all.forEach(r => {
         html += `<tr data-id="${r.id}" data-provider="${r.provider}">
-          <td>${r.provider}</td><td>${r.number}</td><td>${r.fio}</td><td>${r.dateEnd}</td>
-          <td>${r.type}</td>
+          <td>${r.provider}</td><td>${r.number}</td><td>${r.fio}</td><td>${r.dateEnd}</td><td>${r.type}</td>
           <td><input type="checkbox" class="installCheckbox"></td>
           <td><button class="btn saveInstallBtn">Сохранить</button></td>
         </tr>`;
@@ -725,12 +657,10 @@
           const row = e.target.closest('tr');
           const id = row.dataset.id;
           const provider = row.dataset.provider;
-          const checkbox = row.querySelector('.installCheckbox');
-          const checked = checkbox.checked;
-          const records = dataStore[provider];
-          const record = records.find(r => r.id === id);
-          if (record) {
-            record.installed = checked;
+          const checked = row.querySelector('.installCheckbox').checked;
+          const rec = dataStore[provider].find(r => r.id === id);
+          if (rec) {
+            rec.installed = checked;
             logAction('install_toggle', `Провайдер ${provider}, id ${id}, установлена=${checked}`);
             saveToStorage();
             renderDashboard();
@@ -740,7 +670,42 @@
       });
     }
 
-    // Авторизация
+    // ---------- Первичная настройка паролей ----------
+    function isPasswordsSet() {
+      return LOGINS.every(login => userPasswords[login] && userPasswords[login].length > 0);
+    }
+
+    function showSetupModal() {
+      let html = '<h3>Первичная настройка паролей</h3><p>Задайте пароль для каждого логина:</p>';
+      LOGINS.forEach(login => {
+        html += `
+          <div style="margin:10px 0;">
+            <label>${login}</label>
+            <input type="password" id="setup_${login.replace(/\s/g,'')}" placeholder="Пароль" style="width:250px;">
+          </div>`;
+      });
+      html += '<button class="btn" id="saveSetupBtn">Сохранить пароли</button>';
+      openModal('Настройка доступа', html);
+      document.getElementById('saveSetupBtn').addEventListener('click', () => {
+        let valid = true;
+        const newPass = {};
+        LOGINS.forEach(login => {
+          const input = document.getElementById('setup_' + login.replace(/\s/g,''));
+          if (!input.value.trim()) valid = false;
+          newPass[login] = input.value.trim();
+        });
+        if (!valid) {
+          alert('Все пароли должны быть заполнены');
+          return;
+        }
+        userPasswords = newPass;
+        savePasswordsToStorage();
+        modal.classList.remove('active');
+        document.getElementById('loginBtn').disabled = false;
+      });
+    }
+
+    // ---------- Авторизация ----------
     const loginSelect = document.getElementById('loginSelect');
     const passwordInput = document.getElementById('passwordInput');
     const loginBtn = document.getElementById('loginBtn');
@@ -759,6 +724,11 @@
         loginBtn.classList.remove('hidden');
         logoutBtn.classList.add('hidden');
         document.querySelector('.user-block').style.background = 'rgba(0,0,0,0.4)';
+        if (!isPasswordsSet()) {
+          loginBtn.disabled = true;
+        } else {
+          loginBtn.disabled = false;
+        }
       }
     }
 
@@ -766,7 +736,8 @@
       const login = loginSelect.value;
       const pass = passwordInput.value;
       if (!login) return alert('Выберите логин');
-      if (USERS[login] === pass) {
+      if (!userPasswords[login]) return alert('Пароль для данного логина не задан.');
+      if (userPasswords[login] === pass) {
         currentUser = login;
         localStorage.setItem('ecp_current_user', login);
         logAction('login', `Пользователь ${login} вошел`);
@@ -787,17 +758,21 @@
       rowsContainer.innerHTML = '<div style="color:white; padding:20px;">Войдите для просмотра дашборда</div>';
     });
 
-    // Инициализация
+    // ---------- Инициализация ----------
+    populateLoginSelect();
     loadFromStorage();
     updateAuthUI();
+    if (!isPasswordsSet()) {
+      showSetupModal();
+    } else {
+      loginBtn.disabled = false;
+    }
     if (currentUser) {
-      // автоматически отображаем дашборд, если сессия восстановлена
       renderDashboard();
     } else {
       rowsContainer.innerHTML = '<div style="color:white; padding:20px;">Пожалуйста, войдите в систему</div>';
     }
 
-    // Автообновление раз в 60 секунд
     setInterval(() => {
       if (currentUser) renderDashboard();
     }, 60000);
