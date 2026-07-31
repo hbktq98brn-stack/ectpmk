@@ -123,7 +123,7 @@
 
     // ---------- ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ----------
     let currentUser = null;
-    let dataStore = { fk: [], kontur: [], sbis: [] };
+    let dataStore = { fk: [], kontur: [], sabi: [] };
     let userPasswords = {};
 
     // ---------- ХРАНЕНИЕ ДАННЫХ РЕЕСТРОВ ----------
@@ -132,7 +132,7 @@
       if (raw) {
         try {
           const parsed = JSON.parse(raw);
-          if (parsed && parsed.fk && parsed.kontur && parsed.sbis) {
+          if (parsed && parsed.fk && parsed.kontur && parsed.sabi) {
             dataStore = parsed;
             return true;
           }
@@ -244,7 +244,7 @@
           const doc = await db.collection("ecp_data").doc("registries").get();
           if (doc.exists) {
             const cloudData = doc.data();
-            if (cloudData && Array.isArray(cloudData.fk) && Array.isArray(cloudData.kontur) && Array.isArray(cloudData.sbis)) {
+            if (cloudData && Array.isArray(cloudData.fk) && Array.isArray(cloudData.kontur) && Array.isArray(cloudData.sabi)) {
               dataStore = cloudData;
               console.log('☁️ Данные реестров загружены из облака');
               saveLocalData();
@@ -264,7 +264,7 @@
         db.collection("ecp_data").doc("registries").onSnapshot(doc => {
           if (doc.exists) {
             const cloudData = doc.data();
-            if (cloudData && cloudData.fk && cloudData.kontur && cloudData.sbis) {
+            if (cloudData && cloudData.fk && cloudData.kontur && cloudData.sabi) {
               if (JSON.stringify(dataStore) !== JSON.stringify(cloudData)) {
                 dataStore = cloudData;
                 saveLocalData();
@@ -319,7 +319,7 @@
     const providers = [
       { key: 'fk', label: 'ФК' },
       { key: 'kontur', label: 'КОНТУР' },
-      { key: 'sbis', label: 'СБИС' }
+      { key: 'sabi', label: 'САБИ' }
     ];
 
     // ---------- ОТРИСОВКА ДАШБОРДА ----------
@@ -623,7 +623,7 @@
       reader.onload = ev => {
         try {
           const imported = JSON.parse(ev.target.result);
-          if (imported.fk && imported.kontur && imported.sbis) {
+          if (imported.fk && imported.kontur && imported.sabi) {
             if (confirm('Заменить текущие данные?')) {
               dataStore = imported;
               fullSave();
